@@ -12,11 +12,11 @@ python3 HelloWorld.py
 ## Common GitHub Commands
 
 - `git pull`: "pull" the version on GitHub to your local machine. **Always do this before you start working.**
--`git status`: print the status of all the tracked and untracked files.
--`git add <file>`: add a file ("stage" it) for a commit.
--`git add -u`: stage **all** tracked files for a commit.
--`git commit -m "<message>"`: commit the staged files on your local machine.
--`git push origin head`: "push" the commits to GitHub. **Always do this when you're done working.**
+- `git status`: print the status of all the tracked and untracked files.
+- `git add <file>`: add a file ("stage" it) for a commit.
+- `git add -u`: stage **all** tracked files for a commit.
+- `git commit -m "<message>"`: commit the staged files on your local machine.
+- `git push origin head`: "push" the commits to GitHub. **Always do this when you're done working.**
 
 ## GitHub Tutorial
 
