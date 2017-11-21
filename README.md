@@ -78,4 +78,8 @@ git pull
 
 You can then try pushing your commits.
 
+## Troubleshooting
+
+1. If you are merging your files with GitHub (or if you forget the `-m` argument for commits), you will be asked to write a comment in the VIM editor that pops up in the terminal.  You can write the comment (or write nothing) and then type `:x`. You may need to hit the ESC key before typing `:x`.  
+
 
