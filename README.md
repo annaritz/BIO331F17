@@ -11,12 +11,12 @@ python3 HelloWorld.py
 
 ## Common GitHub Commands
 
-`git pull`: "pull" the version on GitHub to your local machine. **Always do this before you start working.**
-`git status`: print the status of all the tracked and untracked files.
-`git add <file>`: add a file ("stage" it) for a commit.
-`git add -u`: stage **all** tracked files for a commit.
-`git commit -m "<message>"`: commit the staged files on your local machine.
-`git push origin head`: "push" the commits to GitHub. **Always do this when you're done working.**
+- `git pull`: "pull" the version on GitHub to your local machine. **Always do this before you start working.**
+-`git status`: print the status of all the tracked and untracked files.
+-`git add <file>`: add a file ("stage" it) for a commit.
+-`git add -u`: stage **all** tracked files for a commit.
+-`git commit -m "<message>"`: commit the staged files on your local machine.
+-`git push origin head`: "push" the commits to GitHub. **Always do this when you're done working.**
 
 ## GitHub Tutorial
 
@@ -26,7 +26,7 @@ python3 HelloWorld.py
 git --version
 ```
 
-If you do not have `git` installed, install it according to your OS.
+If you do not have `git` installed, [install it according to your OS](https://git-scm.com/downloads).
 
 2. "Clone" the project onto your local machine.  Change directories to where you want to esablish the project.  Click the green "Clone or Download" button in the upper right corner and copy the link.  You can then paste the link when typing this command:
 
@@ -48,7 +48,7 @@ and see what has changed.
 
 5. Now, you will **commit** this change.  Commits allow you to make incremental changes to a program and be able to "roll back" to a previous commit at any time.  There are two types of commits: (1) committing the change your local machine and (2) **pushing** those commits to the repository on GitHub.  
 
-5.1.  Commit the change to your local machine.  First, you must **stage** the files for commit by telling git what to keep track of.  This is useful when you are modifying a bunch of files but only want to commit a subset of them.
+..5.1.  Commit the change to your local machine.  First, you must **stage** the files for commit by telling git what to keep track of.  This is useful when you are modifying a bunch of files but only want to commit a subset of them.
 
 ```
 git add HelloWorld.py
@@ -62,7 +62,7 @@ git commit -m "making small change in HelloWorld"
 
 The `-m` argument is the *message*, which should be descriptive.  If you forget the `-m` argument, you may get an error or be redirected to a text editor.
 
-5.2. Push the commit to GitHub:
+..5.2. Push the commit to GitHub:
 
 ```
 git push origin head
