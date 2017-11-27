@@ -5,11 +5,17 @@ from datetime import datetime
 
 def main(): # EEK added comments to this
     #Input files
+
     # interactome = "interactome-flybase.txt" #interactome file
     # positives = "positive-ids.txt" #Positive node file
 
     interactome = "toy_dataset.txt" #interactome file (added by KT)
     positives = "toy_pos_set.txt" #Positive node file (added by KT)
+
+    # interactome = "interactome-flybase.txt" #interactome file
+    # positives = "positive-ids.txt" #Positive node file
+
+
     #read interactome and positive node files
     edges, nodes = read_edge_file(interactome)
     positives = read_id_file(positives,nodes)
