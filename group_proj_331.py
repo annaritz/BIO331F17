@@ -6,14 +6,11 @@ from datetime import datetime
 def main(): # EEK added comments to this
     #Input files
 
-    # interactome = "interactome-flybase.txt" #interactome file
-    # positives = "positive-ids.txt" #Positive node file
+    # interactome = "toy_dataset.txt" #interactome file (added by KT)
+    # positives = "toy_pos_set.txt" #Positive node file (added by KT)
 
-    interactome = "toy_dataset.txt" #interactome file (added by KT)
-    positives = "toy_pos_set.txt" #Positive node file (added by KT)
-
-    # interactome = "interactome-flybase.txt" #interactome file
-    # positives = "positive-ids.txt" #Positive node file
+    interactome = "interactome-flybase.txt" #interactome file
+    positives = "positive-ids.txt" #Positive node file
 
 
     #read interactome and positive node files
@@ -26,18 +23,25 @@ def main(): # EEK added comments to this
     #removes nodes more that 4 nodes away from any positive node, reassigns nodes and edges
     nodes, edges = remove_by_dist(adj_list, positives)
 
-    #generates a steiner tree, SOMETHING, and reassigns adj_list
-    steiner_tree,nonterminal_ST_nodes,adj_list = SteinerApprox(nodes,edges,positives)
+    # #generates a steiner tree, SOMETHING, and reassigns adj_list
+    # steiner_tree,nonterminal_ST_nodes,adj_list = SteinerApprox(nodes,edges,positives)
 
-    # runs BFS on the processed nodes, adj_list from the steiner tree, and positive set
-    bfs_dict = bfs_rank(nodes,adj_list,positives)
+    # # runs BFS on the processed nodes, adj_list from the steiner tree, and positive set
+    # bfs_dict = bfs_rank(nodes,adj_list,positives)
 
-    #Reassigns nodes and edges to be a subgraph 
-    nodes,edges = select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict)
+    #Computes shortest paths given a node and adjacency list
+    dict_possible_terminals=shortest_path(make_adj_list(edges, nodes), positives, "FBgn0265434")
+    print("Possible terminals", dict_possible_terminals)
+    print("Length of the dictionary", len(dict_possible_terminals))
+
+    # #Reassigns nodes and edges to be a subgraph 
+    # nodes,edges = select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict)
+
     
-    #Posts subgraph to GraphSpace
-    title = 'Interactome draft'+str(datetime.now())
-    post_graph(nodes,edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict,title)
+    
+    # #Posts subgraph to GraphSpace
+    # title = 'Interactome draft'+str(datetime.now())
+    # post_graph(nodes,edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict,title)
     return
 
 #Input: Text file containing edges in the interactome
@@ -476,16 +480,16 @@ def post_graph(nodes,edges,nonterminal_ST_nodes,terminals,steiner_tree,BFS_rank,
     print('posted graph with title',title)
     return
 ##New Formulation code (KT)
-def shortest_path(adj_ls, node): #This will compute shortest paths to a particular node, but I don't know which one to link to
+def shortest_path(adj_ls, pos_ls, node): #This will compute shortest paths to a particular node
     d={}
     q=[]
-    for n in nodels:
-        d[n]=100000000000
-    d['070y']=0
-    q=['070y']
+    for n in adj_ls:
+        d[n]=100000000000 #This is going through the connections between the positives in the graph and NM-II
+    d[node]=0
+    q=[node]
     while len(q)!=0:
         w=q.pop(0)
-        for x in adj_ls[w]:
+        for x in adj_ls[w]: #Having trouble here because I need to connect 
             if d[x]==100000000000:
                 d[x]=d[w]+1
                 q.append(x)
