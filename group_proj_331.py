@@ -30,9 +30,11 @@ def main(): # EEK added comments to this
     # bfs_dict = bfs_rank(nodes,adj_list,positives)
 
     #Computes shortest paths given a node and adjacency list
-    dict_possible_terminals=shortest_path(make_adj_list(edges, nodes), positives, "FBgn0265434")
-    print("Possible terminals", dict_possible_terminals)
-    print("Length of the dictionary", len(dict_possible_terminals))
+    T, adj_ls=shortest_paths(nodes, edges, positives)
+    print("T",T)
+    print("adj_ls",adj_ls)
+    # print("Possible terminals", dict_possible_terminals)
+    # print("Length of the dictionary", len(dict_possible_terminals))
 
     # #Reassigns nodes and edges to be a subgraph 
     # nodes,edges = select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict)
@@ -480,21 +482,34 @@ def post_graph(nodes,edges,nonterminal_ST_nodes,terminals,steiner_tree,BFS_rank,
     print('posted graph with title',title)
     return
 ##New Formulation code (KT)
-def shortest_path(adj_ls, pos_ls, node): #This will compute shortest paths to a particular node
-    d={}
-    q=[]
-    for n in adj_ls:
-        d[n]=100000000000 #This is going through the connections between the positives in the graph and NM-II
-    d[node]=0
-    q=[node]
-    while len(q)!=0:
-        w=q.pop(0)
-        for x in adj_ls[w]: #Having trouble here because I need to connect 
-            if d[x]==100000000000:
-                d[x]=d[w]+1
-                q.append(x)
-    return d
-
+#This will compute shortest paths to a particular node
+def shortest_paths(nodes,edges,terminals): ##Miriam
+    print("Beginning shortest paths call") ##EEK
+    # Following solves for weighted edges of the metric closure.  The adj_list is not dependent on a start node, so it is run once and passed throughout the algorithm.
+    mc_edges,adj_list = get_metric_closure(nodes,edges,terminals)
+    ## Following function reused from Lab6.  It returns the minimum spanning tree for the metric closure of G.
+    # Tmc = kruskal(terminals,mc_edges)
+    #We don't need kruskal's because we're going through the nodes, and we don't need to minimize edges
+    # T will build the full Steiner tree as a list of edges.
+    T = set()
+    for node in nodes: #for each node in the node
+    # dijkstra's is rerun to solve for pi, so previous paths can be reconstructed from 's' (edge[0]) to end (edge[1]).
+        D,pi = dijkstra(nodes, adj_list,node)
+        P = get_path(pi,"FBgn0265434") # Reconstructs subpath from 's' to end.
+        for i in range(len(P)): # for each node in subpath P
+            if i <= len(P)-2: # Up until the second to last index
+                if tuple([P[i],P[i+1]]) not in T and tuple([P[i+1],P[i]]) not in T:
+                    T.add(tuple([P[i],P[i+1]])) # Add the edge to T
+    print('steiner tree: '+str(T))
+    nonterminal_ST_nodes = set()
+    for i in T:
+        if i[0] not in terminals:
+            nonterminal_ST_nodes.add(i[0])
+        if i[1] not in terminals:
+            nonterminal_ST_nodes.add(i[1])
+    print('nonterminal_ST_nodes: '+str(nonterminal_ST_nodes))
+    return T,adj_list
+#So what this is 
 
 
 
