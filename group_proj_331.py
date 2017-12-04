@@ -512,6 +512,17 @@ def shortest_paths(nodes,edges,terminals): ##Miriam
 #So what this is 
 
 
+# ## Writes any output to a file 
+# def write_to_file(input, filename):
+# out_file = open(str(filename)+'.txt','w')
+#         if type(input) is a list:
+#             for m in scoreList:
+#                 out_file.write(str(m) + '\n')
+#             out_file.close()
+#         elif type(input) is a dict:
+#             out_file.write(str(m) + '\n')
+#             out_file.close()
+
 
 
 if __name__ == '__main__':
