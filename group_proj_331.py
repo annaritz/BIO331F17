@@ -518,6 +518,81 @@ def shortest_paths(nodes,edges,terminals): ##Miriam
     return T,adj_list
 #keep track of the positive it is going from in a dictionary--{key is non-positive node: value is upstream pos node it came from}
 
+'''
+Elaine's output functions!
+'''
+##Input is a set of tuples (edges)
+## Build list of nodes in the tree for use in nodes_out
+## Output is two columns, one per node in edge
+def steiner_edges_out(tree_edge_set, filename): # Steiner
+    out_file = open(str(filename)+'.txt','w')
+    all_nodes = set()
+    for m in input:
+        for i in range(len(m)):
+            if m[i] not in all_nodes:
+                all_nodes.add(m[i])
+            if i == 0:
+                out_file.write(str(m[i]) + '\t')
+            else:
+                out_file.write(str(m[i]) + '\n')
+    out_file.close()
+    print(all_nodes)
+    return all_nodes
+'''
+This works now!
+'''
+
+
+##Input all_nodes is set of nodes from egdes_out and input non_pos_nodes is SET of non positive nodes
+#output is two columns, one is the node and the other is whether it is a positive note (N/Y) 
+def steiner_nodes_out(all_nodes, non_pos_nodes, filename): # Steiner
+    out_file = open(str(filename)+'.txt','w')
+    for node in all_nodes:
+        out_file.write(str(node) + '\t')
+        if node in non_pos_nodes:
+            out_file.write('N' + '\n')
+        else:
+            out_file.write('Y' + '\n')
+    out_file.close()
+'''
+This works too!
+'''
+        
+#Input BFS_rank_list is a list of two item lists [[node,float],[node1, float1] ]
+#Output is two columns, one is the node and the other is the BFS rank
+def BFS_rank_out(BFS_rank_list, filename): # BFS rank 
+    out_file = open(str(filename)+'.txt','w')
+    for m in BFS_rank_list:
+        for i in range(len(m)):
+            if i == 0:
+                out_file.write(str(m[i]) + '\t')
+            else:
+                out_file.write(str(m[i]) + '\n')
+    out_file.close()
+
+'''
+This works!
+'''
+
+## Input dict is a dictionary with key = non pos node, value = upstream pos node
+## output is two columns, with one as non_pos_node and the other as upstream pos node
+def shortest_paths_out(dict, filename): # new shortest paths
+    out_file = open(str(filename)+'.txt','w')
+    for key in dict:
+        out_file.write(str(key) + '\t')
+        out_file.write(str(dict[key]) + '\n')
+    out_file.close()
+
+'''
+This works!
+'''
+
+
+#def compare_outputs:
+    ## Use this function ot read in output text files 
+    ## compare the nodes that are present in them
+
+
 
 
 
