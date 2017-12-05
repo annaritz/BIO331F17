@@ -8,6 +8,7 @@ def main(): # EEK added comments to this
 
     # interactome = "toy_dataset.txt" #interactome file (added by KT)
     # positives = "toy_pos_set.txt" #Positive node file (added by KT)
+    print(datetime.now())
 
     interactome = "interactome-flybase.txt" #interactome file
     positives = "positive-ids.txt" #Positive node file
@@ -31,8 +32,8 @@ def main(): # EEK added comments to this
 
     #Computes shortest paths given a node and adjacency list
     T, adj_ls=shortest_paths(nodes, edges, positives)
-    print("T",T)
-    print("adj_ls",adj_ls)
+    # print("T",T)
+    # print("adj_ls",adj_ls)
     # print("Possible terminals", dict_possible_terminals)
     # print("Length of the dictionary", len(dict_possible_terminals))
 
@@ -485,31 +486,37 @@ def post_graph(nodes,edges,nonterminal_ST_nodes,terminals,steiner_tree,BFS_rank,
 #This will compute shortest paths to a particular node
 def shortest_paths(nodes,edges,terminals): ##Miriam
     print("Beginning shortest paths call") ##EEK
+    pos_node_dict={} #will keep track of what positive comes with each node
     # Following solves for weighted edges of the metric closure.  The adj_list is not dependent on a start node, so it is run once and passed throughout the algorithm.
-    mc_edges,adj_list = get_metric_closure(nodes,edges,terminals)
+    # mc_edges,adj_list,pi_dict,distance_dict = get_metric_closure(nodes,edges,terminals)
     ## Following function reused from Lab6.  It returns the minimum spanning tree for the metric closure of G.
     # Tmc = kruskal(terminals,mc_edges)
     #We don't need kruskal's because we're going through the nodes, and we don't need to minimize edges
     # T will build the full Steiner tree as a list of edges.
+    adj_list = get_adj_list_with_weights(edges) #adj_list for edges of G
     T = set()
-    for node in nodes: #for each node in the node
+    nonterminal_ST_nodes = set()
+    D,pi = dijkstra(nodes, adj_list, "FBgn0265434") #We can make one single call because this is an undirected graph
+    for node in terminals: #for each node in the node
     # dijkstra's is rerun to solve for pi, so previous paths can be reconstructed from 's' (edge[0]) to end (edge[1]).
-        D,pi = dijkstra(nodes, adj_list,node)
-        P = get_path(pi,"FBgn0265434") # Reconstructs subpath from 's' to end.
+        P = get_path(pi,node) # Reconstructs subpath from 's' to end.
         for i in range(len(P)): # for each node in subpath P
             if i <= len(P)-2: # Up until the second to last index
                 if tuple([P[i],P[i+1]]) not in T and tuple([P[i+1],P[i]]) not in T:
                     T.add(tuple([P[i],P[i+1]])) # Add the edge to T
-    print('steiner tree: '+str(T))
-    nonterminal_ST_nodes = set()
-    for i in T:
-        if i[0] not in terminals:
-            nonterminal_ST_nodes.add(i[0])
-        if i[1] not in terminals:
-            nonterminal_ST_nodes.add(i[1])
+                    for i in T:
+                        if i[0] not in terminals:
+                            nonterminal_ST_nodes.add(i[0])
+                            pos_node_dict[i[0]]=node
+                        if i[1] not in terminals:
+                            nonterminal_ST_nodes.add(i[1])
+                            pos_node_dict[i[1]]=node
+    print("pos_node_dict",pos_node_dict)
+    # print('shortest_paths: '+str(T))
     print('nonterminal_ST_nodes: '+str(nonterminal_ST_nodes))
+
     return T,adj_list
-#So what this is 
+#keep track of the positive it is going from in a dictionary--{key is non-positive node: value is upstream pos node it came from}
 
 
 
