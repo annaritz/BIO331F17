@@ -45,6 +45,37 @@ def main(): # EEK added comments to this
     # #Posts subgraph to GraphSpace
     # title = 'Interactome draft'+str(datetime.now())
     # post_graph(nodes,edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict,title)
+    
+    '''
+    Output Processing
+
+    These need to be reset to actual valuse, not toy example
+    '''
+
+    # steiner tree edges (set of tuples)
+    tree_edge_set = (('A','B'),('B','D'),('B','C'),('D','E'),('E','F'))
+    
+    # returns steiner tree nodes(from steiner edges out) as list of nodes
+    all_nodes = steiner_edges_out(tree_edge_set,'tree_edges')
+    
+    # steiner non-positive terminals (list of nodes)
+    non_pos_nodes = ['B','C','D','E']
+
+    steiner_nodes_out(all_nodes, non_pos_nodes, 'tree_nodes')
+
+
+    # BFS rank (list of two item lists [[node,float],[node1, float1]])
+    BFS_rank_list = [['C',.96],['B',.75],['A',.55],['D',.36],['E',.25],['F',.17]]
+
+    BFS_rank_out(BFS_rank_list,'BFS_rank')
+
+    # new_shortest_paths input (dictionary with key = non pos node, value = upstream pos node)
+    dict = {'B':'A','C':'A','D':'F','E':'F'}
+
+    shortest_paths_out(dict, 'new_shortest_paths')
+
+    read_common_names('nodes-flybase.txt')
+
     return
 
 #Input: Text file containing edges in the interactome
@@ -315,7 +346,7 @@ def dijkstra(nodes,adj_list,s):
 
 
 #Input: a list of nodes, edges, and terminal nodes L
-#Output: the Steiner Tree of the graph as a list of edges and a list of Steiner Tree nodes
+#Output: the Steiner Tree of the graph as a set of edges and a list of Steiner Tree nodes
 def SteinerApprox(nodes,edges,terminals): ##Miriam
     print("Beginning Steiner Approximation") ##EEK
     # Following solves for weighted edges of the metric closure.  The adj_list is not dependent on a start node, so it is run once and passed throughout the algorithm.
@@ -482,6 +513,8 @@ def post_graph(nodes,edges,nonterminal_ST_nodes,terminals,steiner_tree,BFS_rank,
         graph = graphspace.post_graph(G)
     print('posted graph with title',title)
     return
+
+
 ##New Formulation code (KT)
 #This will compute shortest paths to a particular node
 def shortest_paths(nodes,edges,terminals): ##Miriam
@@ -534,7 +567,7 @@ def read_common_names(filename):
     print('Name dictionary:' + str(name_dict))
     return name_dict
 
-    
+
 ##Input is a set of tuples (edges)
 ## Build list of nodes in the tree for use in nodes_out
 ## Output is two columns, one per node in edge
@@ -558,7 +591,7 @@ This works now!
 
 
 ##Input all_nodes is set of nodes from egdes_out and input non_pos_nodes is SET of non positive nodes
-#output is two columns, one is the node and the other is whether it is a positive note (N/Y) 
+#output is two columns, one is the node and the other is whether it is a positive node (N/Y) 
 def steiner_nodes_out(all_nodes, non_pos_nodes, filename): # Steiner
     out_file = open(str(filename)+'.txt','w')
     for node in all_nodes:
