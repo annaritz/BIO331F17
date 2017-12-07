@@ -521,6 +521,20 @@ def shortest_paths(nodes,edges,terminals): ##Miriam
 '''
 Elaine's output functions!
 '''
+
+## Input is the file 'nodes-flybase.txt'
+## Outputs a dictionary with flybase IDs as keys and common names as values
+def read_common_names(filename):
+    name_dict = {}
+    with open (filename, 'r') as f:
+        for line in f:
+            k = line.strip().split()
+            if k[2] is not k[0]:
+                name_dict[k[0]] = k[2]
+    print('Name dictionary:' + str(name_dict))
+    return name_dict
+
+    
 ##Input is a set of tuples (edges)
 ## Build list of nodes in the tree for use in nodes_out
 ## Output is two columns, one per node in edge
