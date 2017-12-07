@@ -340,7 +340,7 @@ def SteinerApprox(nodes,edges,terminals): ##Miriam
         if i[1] not in terminals:
             nonterminal_ST_nodes.add(i[1])
     print('nonterminal_ST_nodes: '+str(nonterminal_ST_nodes))
-    return T,adj_list
+    return T, nonterminal_ST_nodes
 
 
 ## Function updates the connected component based on an input of previous connected components and two nodes (the latter are the new edge in the min spanning tree).  Returns updated connected component.
@@ -484,14 +484,10 @@ def post_graph(nodes,edges,nonterminal_ST_nodes,terminals,steiner_tree,BFS_rank,
     return
 ##New Formulation code (KT)
 #This will compute shortest paths to a particular node
-def shortest_paths(nodes,edges,terminals): ##Miriam
-    print("Beginning shortest paths call") ##EEK
+#keeps track of the positive it is going from in a dictionary--{key is non-positive node: value is upstream pos nodes it came from}
+def shortest_paths(nodes,edges,terminals): ##KT, with help from Anna
+    print("Beginning shortest paths call") 
     pos_node_dict={} #will keep track of what positive comes with each node
-    # Following solves for weighted edges of the metric closure.  The adj_list is not dependent on a start node, so it is run once and passed throughout the algorithm.
-    # mc_edges,adj_list,pi_dict,distance_dict = get_metric_closure(nodes,edges,terminals)
-    ## Following function reused from Lab6.  It returns the minimum spanning tree for the metric closure of G.
-    # Tmc = kruskal(terminals,mc_edges)
-    #We don't need kruskal's because we're going through the nodes, and we don't need to minimize edges
     # T will build the full Steiner tree as a list of edges.
     adj_list = get_adj_list_with_weights(edges) #adj_list for edges of G
     T = set()
@@ -506,17 +502,20 @@ def shortest_paths(nodes,edges,terminals): ##Miriam
                     T.add(tuple([P[i],P[i+1]])) # Add the edge to T
                     for i in T:
                         if i[0] not in terminals:
-                            nonterminal_ST_nodes.add(i[0])
-                            pos_node_dict[i[0]]=node
+                            nonterminal_ST_nodes.add(i[0]) #adds the node if it hasn't seen in before
+                            if i[0] not in pos_node_dict:
+                                pos_node_dict[i[0]]=set() #adds the key to the dictionary if it doesn't exist yet
+                            pos_node_dict[i[0]].add(node) #adds the positive we were using to the set of positives that reach this node
                         if i[1] not in terminals:
-                            nonterminal_ST_nodes.add(i[1])
-                            pos_node_dict[i[1]]=node
+                            nonterminal_ST_nodes.add(i[1]) #again, adds the node if it hasn't seen it before
+                            if i[1] not in pos_node_dict:
+                                pos_node_dict[i[1]]=set() #adds the key to the dictionary if it doesn't exist yet
+                            pos_node_dict[i[1]].add(node) #adds the positive we were using to the set of positives that reach this node
     print("pos_node_dict",pos_node_dict)
-    # print('shortest_paths: '+str(T))
     print('nonterminal_ST_nodes: '+str(nonterminal_ST_nodes))
 
-    return T,adj_list
-#keep track of the positive it is going from in a dictionary--{key is non-positive node: value is upstream pos node it came from}
+    return pos_node_dict, nonterminal_ST_nodes
+
 
 '''
 Elaine's output functions!
