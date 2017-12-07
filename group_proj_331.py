@@ -24,18 +24,15 @@ def main(): # EEK added comments to this
     #removes nodes more that 4 nodes away from any positive node, reassigns nodes and edges
     nodes, edges = remove_by_dist(adj_list, positives)
 
-    # #generates a steiner tree, SOMETHING, and reassigns adj_list
-    # steiner_tree,nonterminal_ST_nodes,adj_list = SteinerApprox(nodes,edges,positives)
+    # #generates a steiner tree, and set of non terminal nodes
+    steiner_tree,nonterminal_ST_nodes = SteinerApprox(nodes,edges,positives)
 
     # # runs BFS on the processed nodes, adj_list from the steiner tree, and positive set
-    # bfs_dict = bfs_rank(nodes,adj_list,positives)
+    bfs_dict = bfs_rank(nodes,adj_list,positives)
 
     #Computes shortest paths given a node and adjacency list
-    T, adj_ls=shortest_paths(nodes, edges, positives)
-    # print("T",T)
-    # print("adj_ls",adj_ls)
-    # print("Possible terminals", dict_possible_terminals)
-    # print("Length of the dictionary", len(dict_possible_terminals))
+    pos_node_dict, SP_nonterminal_nodes = shortest_paths(nodes, edges, positives)
+   
 
     # #Reassigns nodes and edges to be a subgraph 
     # nodes,edges = select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict)
@@ -49,32 +46,25 @@ def main(): # EEK added comments to this
     '''
     Output Processing
 
-    These need to be reset to actual valuse, not toy example
+    These need to be reset to actual values, not toy example
     '''
-
-    # steiner tree edges (set of tuples)
-    tree_edge_set = (('A','B'),('B','D'),('B','C'),('D','E'),('E','F'))
     
     # returns steiner tree nodes(from steiner edges out) as list of nodes
-    all_nodes = steiner_edges_out(tree_edge_set,'tree_edges')
+    all_nodes = steiner_edges_out(steiner_tree,'tree_edges')
     
     # steiner non-positive terminals (list of nodes)
-    non_pos_nodes = ['B','C','D','E']
 
-    steiner_nodes_out(all_nodes, non_pos_nodes, 'tree_nodes')
+    steiner_nodes_out(all_nodes, nonterminal_ST_nodes, 'tree_nodes')
 
 
     # BFS rank (list of two item lists [[node,float],[node1, float1]])
-    BFS_rank_list = [['C',.96],['B',.75],['A',.55],['D',.36],['E',.25],['F',.17]]
-
-    BFS_rank_out(BFS_rank_list,'BFS_rank')
+    BFS_rank_out(BFS_dict,'BFS_rank')
 
     # new_shortest_paths input (dictionary with key = non pos node, value = upstream pos node)
-    dict = {'B':'A','C':'A','D':'F','E':'F'}
 
-    shortest_paths_out(dict, 'new_shortest_paths')
+    shortest_paths_out(pos_node_dict, 'new_shortest_paths')
 
-    read_common_names('nodes-flybase.txt')
+
 
     return
 
@@ -524,7 +514,7 @@ def shortest_paths(nodes,edges,terminals): ##KT, with help from Anna
     # T will build the full Steiner tree as a list of edges.
     adj_list = get_adj_list_with_weights(edges) #adj_list for edges of G
     T = set()
-    nonterminal_ST_nodes = set()
+    SP_nonterminal_nodes = set()
     D,pi = dijkstra(nodes, adj_list, "FBgn0265434") #We can make one single call because this is an undirected graph
     for node in terminals: #for each node in the node
     # dijkstra's is rerun to solve for pi, so previous paths can be reconstructed from 's' (edge[0]) to end (edge[1]).
@@ -535,37 +525,24 @@ def shortest_paths(nodes,edges,terminals): ##KT, with help from Anna
                     T.add(tuple([P[i],P[i+1]])) # Add the edge to T
                     for i in T:
                         if i[0] not in terminals:
-                            nonterminal_ST_nodes.add(i[0]) #adds the node if it hasn't seen in before
+                            SP_nonterminal_nodes.add(i[0]) #adds the node if it hasn't seen in before
                             if i[0] not in pos_node_dict:
                                 pos_node_dict[i[0]]=set() #adds the key to the dictionary if it doesn't exist yet
                             pos_node_dict[i[0]].add(node) #adds the positive we were using to the set of positives that reach this node
                         if i[1] not in terminals:
-                            nonterminal_ST_nodes.add(i[1]) #again, adds the node if it hasn't seen it before
+                            SP_nonterminal_nodes.add(i[1]) #again, adds the node if it hasn't seen it before
                             if i[1] not in pos_node_dict:
                                 pos_node_dict[i[1]]=set() #adds the key to the dictionary if it doesn't exist yet
                             pos_node_dict[i[1]].add(node) #adds the positive we were using to the set of positives that reach this node
     print("pos_node_dict",pos_node_dict)
-    print('nonterminal_ST_nodes: '+str(nonterminal_ST_nodes))
+    print('nonterminal_ST_nodes: '+str(SP_nonterminal_nodes))
 
-    return pos_node_dict, nonterminal_ST_nodes
+    return pos_node_dict, SP_nonterminal_nodes
 
 
 '''
 Elaine's output functions!
 '''
-
-## Input is the file 'nodes-flybase.txt'
-## Outputs a dictionary with flybase IDs as keys and common names as values
-def read_common_names(filename):
-    name_dict = {}
-    with open (filename, 'r') as f:
-        for line in f:
-            k = line.strip().split()
-            if k[2] is not k[0]:
-                name_dict[k[0]] = k[2]
-    print('Name dictionary:' + str(name_dict))
-    return name_dict
-
 
 ##Input is a set of tuples (edges)
 ## Build list of nodes in the tree for use in nodes_out
