@@ -27,12 +27,23 @@ def main(): # EEK added comments to this
     # #generates a steiner tree, and set of non terminal nodes
     steiner_tree,nonterminal_ST_nodes = SteinerApprox(nodes,edges,positives)
 
+     # returns steiner tree nodes(from steiner edges out) as list of nodes
+    all_nodes = steiner_edges_out(steiner_tree,'tree_edges')
+
+    # steiner non-positive terminals (list of nodes)
+    steiner_nodes_out(all_nodes, nonterminal_ST_nodes, 'tree_nodes')
+
     # # runs BFS on the processed nodes, adj_list from the steiner tree, and positive set
     bfs_dict = bfs_rank(nodes,adj_list,positives)
+
+    # BFS rank (list of two item lists [[node,float],[node1, float1]])
+    BFS_rank_out(BFS_dict,'BFS_rank')
 
     #Computes shortest paths given a node and adjacency list
     pos_node_dict, SP_nonterminal_nodes = shortest_paths(nodes, edges, positives)
    
+    # new_shortest_paths input (dictionary with key = non pos node, value = upstream pos node)
+    shortest_paths_out(pos_node_dict, 'new_shortest_paths')
 
     # #Reassigns nodes and edges to be a subgraph 
     # nodes,edges = select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict)
@@ -42,27 +53,12 @@ def main(): # EEK added comments to this
     # #Posts subgraph to GraphSpace
     # title = 'Interactome draft'+str(datetime.now())
     # post_graph(nodes,edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict,title)
+   
+
+
     
-    '''
-    Output Processing
-
-    These need to be reset to actual values, not toy example
-    '''
-    
-    # returns steiner tree nodes(from steiner edges out) as list of nodes
-    all_nodes = steiner_edges_out(steiner_tree,'tree_edges')
-    
-    # steiner non-positive terminals (list of nodes)
-
-    steiner_nodes_out(all_nodes, nonterminal_ST_nodes, 'tree_nodes')
 
 
-    # BFS rank (list of two item lists [[node,float],[node1, float1]])
-    BFS_rank_out(BFS_dict,'BFS_rank')
-
-    # new_shortest_paths input (dictionary with key = non pos node, value = upstream pos node)
-
-    shortest_paths_out(pos_node_dict, 'new_shortest_paths')
 
 
 
@@ -340,7 +336,7 @@ def dijkstra(nodes,adj_list,s):
 def SteinerApprox(nodes,edges,terminals): ##Miriam
     print("Beginning Steiner Approximation") ##EEK
     # Following solves for weighted edges of the metric closure.  The adj_list is not dependent on a start node, so it is run once and passed throughout the algorithm.
-    mc_edges,adj_list = get_metric_closure(nodes,edges,terminals)
+    mc_edges,adj_list,pi_dict,distance_dict = get_metric_closure(nodes,edges,terminals)
     ## Following function reused from Lab6.  It returns the minimum spanning tree for the metric closure of G.
     Tmc = kruskal(terminals,mc_edges)
     # T will build the full Steiner tree as a list of edges.
@@ -550,7 +546,8 @@ Elaine's output functions!
 def steiner_edges_out(tree_edge_set, filename): # Steiner
     out_file = open(str(filename)+'.txt','w')
     all_nodes = set()
-    for m in input:
+    out_file.write('Edge1'+'\t'+'Edge2'+'\n')
+    for m in tree_edge_set:
         for i in range(len(m)):
             if m[i] not in all_nodes:
                 all_nodes.add(m[i])
@@ -568,11 +565,12 @@ This works now!
 
 ##Input all_nodes is set of nodes from egdes_out and input non_pos_nodes is SET of non positive nodes
 #output is two columns, one is the node and the other is whether it is a positive node (N/Y) 
-def steiner_nodes_out(all_nodes, non_pos_nodes, filename): # Steiner
+def steiner_nodes_out(all_nodes, non_term_nodes, filename): # Steiner
     out_file = open(str(filename)+'.txt','w')
+    out_file.write('Node'+'\t'+'Terminal(Y/N)'+'\n')
     for node in all_nodes:
         out_file.write(str(node) + '\t')
-        if node in non_pos_nodes:
+        if node in non_term_nodes:
             out_file.write('N' + '\n')
         else:
             out_file.write('Y' + '\n')
@@ -585,6 +583,7 @@ This works too!
 #Output is two columns, one is the node and the other is the BFS rank
 def BFS_rank_out(BFS_rank_list, filename): # BFS rank 
     out_file = open(str(filename)+'.txt','w')
+    out_file.write('Node'+'\t'+'BFS_Rank'+'\n')
     for m in BFS_rank_list:
         for i in range(len(m)):
             if i == 0:
@@ -601,6 +600,7 @@ This works!
 ## output is two columns, with one as non_pos_node and the other as upstream pos node
 def shortest_paths_out(dict, filename): # new shortest paths
     out_file = open(str(filename)+'.txt','w')
+    out_file.write('Node'+'\t'+'Up_pos_nodes'+'\n')
     for key in dict:
         out_file.write(str(key) + '\t')
         out_file.write(str(dict[key]) + '\n')
