@@ -34,22 +34,24 @@ def main(): # EEK added comments to this
     # steiner non-positive terminals (list of nodes)
     steiner_nodes_out(all_nodes, nonterminal_ST_nodes, 'tree_nodes')
     
+    steiner_adj_list_file(steiner_adj_list, 'steiner_adj_list')
+
     print('Done with Steiner Tree: ' + str(datetime.now()))
     # # runs BFS on the processed nodes, adj_list from the steiner tree, and positive set
     bfs_dict = bfs_rank(nodes,steiner_adj_list,positives)
-
+    normalize_bfs_rank(bfs_dict)
     # BFS rank (list of two item lists [[node,float],[node1, float1]])
     BFS_rank_out(bfs_dict,'BFS_rank')
 
     print('Done with BFS Rank: ' + str(datetime.now()))
 
     #Computes shortest paths given a node and adjacency list
-    pos_node_dict, SP_nonterminal_nodes = shortest_paths(nodes, edges, positives)
+    #pos_node_dict, SP_nonterminal_nodes = shortest_paths(nodes, edges, positives)
    
     # new_shortest_paths input (dictionary with key = non pos node, value = upstream pos node)
-    shortest_paths_out(pos_node_dict, 'new_shortest_paths')
+    #shortest_paths_out(pos_node_dict, 'new_shortest_paths')
 
-    print('Done with Shortest Paths: ' + str(datetime.now()))
+    #print('Done with Shortest Paths: ' + str(datetime.now()))
     # #Reassigns nodes and edges to be a subgraph 
     # nodes,edges = select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict)
 
@@ -429,7 +431,7 @@ def normalize_bfs_rank(rank):##Wyatt
             mxm = rank[node]
     for node in rank:
         rank[node] = rank[node]/mxm #normalizes the values
-    return
+    return 
 
 #Input: edges, non terminal nodes that were included in the steiner tree, 
 #a list of positive nodes, the list of edges from the steiner tree, 
@@ -596,11 +598,7 @@ def BFS_rank_out(BFS_rank_list, filename): # BFS rank
     out_file = open(str(filename)+'.txt','w')
     out_file.write('Node'+'\t'+'BFS_Rank'+'\n')
     for m in BFS_rank_list:
-        for i in range(len(m)):
-            if i == 0:
-                out_file.write(str(m[i]) + '\t')
-            else:
-                out_file.write(str(m[i]) + '\n')
+        out_file.write(str(m) + '\t' + BFS_rank_list[m] + '\n')
     out_file.close()
 
 '''
@@ -621,14 +619,23 @@ def shortest_paths_out(dict, filename): # new shortest paths
 This works!
 '''
 
+def steiner_adj_list_file(adj_list, filename):
+    out_file = open(str(filename)+'.txt','w')
+    out_file.write(str(adj_list))
+    out_file.close()
+'''
+This works!
+'''
 
-#def compare_outputs:
-    ## Use this function ot read in output text files 
-    ## compare the nodes that are present in them
+def adj_list_read(filename):
+    with open (filename, 'r') as f:
+        for line in f:
+            k = line 
+    return k
 
-
-
-
+'''
+This works!
+'''
 
 if __name__ == '__main__':
     main()
