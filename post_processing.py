@@ -82,7 +82,8 @@ def read_new_shortest_paths(filename):
 	print('Shortest Paths Nodes:', shortest_paths_nodes)
 	return shortest_paths_nodes
 
-## converst 
+## converts FlyBase identifiers to common names
+## leaces FlyBase id if there is no common name
 def FB_to_common(node_set, common_names_dict):
 	new_set = set()
 	for node in node_set:
@@ -93,16 +94,10 @@ def FB_to_common(node_set, common_names_dict):
 	print(new_set)
 	return new_set
 
+
+## checks to see if 
 def in_both_sets(set1, set2):
-	both_set = set()
-	if len(set1)>len(set2):
-		for node in set1:
-			if node in set2:
-				both_set.add(node)
-	else:
-		for node in set2:
-			if node in set1:
-				both_set.add(node)
+	both_set = set1.intersection(set2)
 	return both_set
 
 
