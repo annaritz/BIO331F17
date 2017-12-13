@@ -1,9 +1,11 @@
 ## Summary Statistics Modification of Hw3
 ## Wyatt Gormley
-## Double ## indicates reuse or collaborative code, single # indicates new code
+## New coded is meant to be commented with a single #, triple quotes are excluded.
 ## Remove by distance currently uses BFS, may need to switch to dijkstra's,
-## Could run in the main group code using Miriam D_dict and pi_dict passed
-## throughout our algorithm
+## Summary stats 1a and 1b include degree distribution and average AND per k,
+## Which can be useful in the report.  Summary stat 2 reviews the quanitity of
+## nodes and edges within path 0<r<7 from a positive, whih maxes out at 17715
+## when all nodes of the largest connected omponent are included/
 ## Import Statements
 from __future__ import print_function # (needed for python2 vs. python3)
 import matplotlib.pyplot as plt
@@ -17,21 +19,27 @@ def main():
     edges,nodes = read_edge_file("interactome-flybase.txt") # get graph
     positives = read_id_file("positive-ids.txt",nodes) # get pos set
     negatives = read_id_file("negative-ids.txt",nodes) # get neg set
-    adj_list = get_adj_list_with_weights(edges) # get adj_list
-    AND_dict = get_AND(adj_list) # construct dict {node : Ave Nv dv, ...}
+    adj_list = get_adj_list_with_weights(edges) # get adj_list w/ weights
+    # Sumary Stats 1a
+    AND_dict = get_AND(adj_list) # construct dict {node1 : Ave. Nv dv,node2...}
+    # Summary Stats 1b
     # get 'degree hist' dict of:
     # { k=1 : average AND for k=1, k=2 : ave AND for k=2,...}
+    # and k_count dict of {k: No. of ks in set, k+1: No. of Ks, ...}
     # for the positive, negative, & full interactome sets
     pos_degree_hist,pos_k_count = get_histogram(AND_dict,adj_list,positives)
     neg_degree_hist,neg_k_count = get_histogram(AND_dict,adj_list,negatives)
     interactome_degree_hist,k_count = get_histogram(AND_dict,adj_list,nodes)
-
+    # Plot these two data sets as scatterplots
     create_K_count_plot(k_count,pos_k_count,neg_k_count) #plots histogram
     create_K_AND_plot(interactome_degree_hist, pos_degree_hist,neg_degree_hist)#plots
-    #create_plot(d,'path_hist') #histogram of shortest_path lengths created
-    separation_nodes_dict,separation_edges_dict = create_separation_dict(adj_list,positives)
-    create_node_separation_plot(separation_nodes_dict,separation_edges_dict) #plots histogram
+    """create_plot(d,'path_hist') #histogram of shortest_path lengths created"""
 
+    # The following keeps track of how many nodes (dict value) are some minimum
+    # distance (numbers which become dictionary keys) from any positibe node.  Records some
+    separation_nodes_dict,separation_edges_dict = create_separation_dict(adj_list,positives)
+    create_separation_nodes_plot(separation_nodes_dict)
+    create_separation_edges_plot(separation_edges_dict)
     return
 #end of main function
 ## reads .txt file as a set of edge tupples (u, v, 1) and a set of nodes.
@@ -44,14 +52,13 @@ def read_edge_file(filename): ##taken from L.T.'s code and then edited by K.T (l
             k = line.strip().split() #this is only for the toy dataset. split on tabs otherwise
             k = k[0:2]
             k.append(1) ## EEK, adds edge weight 1 to every edge, used for calculating get_adj_list_with_weights
-            edges.add(tuple(k))
-            nodes.add(k[0])
-            nodes.add(k[1])
+            if k[0] != k[1]:
+                edges.add(tuple(k))
+                nodes.add(k[0])
+                nodes.add(k[1])
     print(s)
     print('len edges: '+str(len(edges)))
-    print('edges: '+str(edges))
     print('len nodes: '+str(len(nodes)))
-    print('nodes: '+str(nodes))
     return edges,nodes
 ## reads positive or negative .txt file, checking that each node is contained in
 ## the main graph, and then builds a set of read nodes to return.
@@ -87,7 +94,7 @@ def get_adj_list_with_weights(edges):
 ## Uses an adjacency list to return a dictionary {node: AND, ...} where AND
 ## indicates 'average neighbor degree.'
 def get_AND(adj_list):
-    print('Starting Summary Statistics 1a:\nAverage Neighbor Degree of Nodes')
+    print('Starting Summary Statistics 1a: Average Neighbor Degree of Nodes')
     AND_dict = {} ##initialize an ave. Nv degree {node:AND}
     for key in adj_list: ##for each node
         AND = 0 ##initialize ave. Nv degree to 0
@@ -97,37 +104,14 @@ def get_AND(adj_list):
         if dv > 0: ##prevents dividing by 0
             AND = float(AND)/float(dv) ##complete AND computation for node.
         AND_dict[key] = AND
-    print('AND_dict: '+str(AND_dict))##produces a histogram dict {k:average AND}
+    print('AND_dict len: '+str(len(AND_dict)))##produces a histogram dict {k:average AND}
     return AND_dict
-#
-"""#function converts a dictionary {n:AND} to dict of {k: ave AND}
-# Assumption was made to remove 0 as a key to prevent log(0) in histogram plot
-#maybe this should get handled elsewhere?
-def get_histogram(AND_dict,adj_list):
-    histogram = {} #create output dictionary {k: ave AND}
-    k_count = {} #records the number of k occurences
-    for key in AND_dict: #for each node in the ave Nv degree dictionary
-        k = len(adj_list[key]) #k equals the number of its neighbors, or dv
-        if k not in histogram.keys(): #If such value is not yet in AND_dict
-            histogram[k] = AND_dict[key] #create pair {k:AND}
-            k_count[k] = 1 #up k_count[k] to one
-        else:
-            histogram[k] += AND_dict[key]
-            k_count[k] +=1
-    for k in histogram:
-        histogram[k] = float(histogram[k])/float(k_count[k])
-    if 0 in histogram.keys(): #if 0 is a k value in histogram
-        del histogram[0] #delete it, as it will produce a log[0] error elsewhere
-    print('histogram: '+str(histogram))
-    print('k_count: '+str(k_count))
-    return histogram, k_count
-"""
 # Code rewritten from HW3.  Function uses adj_list, previously constructed Ave
 # Nv dv dict, and a node set (terminals) to analyze, producing a histogram in
 # the form { k : ave AND, ... }.  An assumption was made to remove 0 as a key to
 # prevent log(0) error in plot, maybe this should get handled elsewhere?
 def get_histogram(AND_dict,adj_list,terminals):
-    print('Starting Summary Statistics 1b:\nK-Count and K-AND')
+    print('Starting Summary Statistics 1b: K-Count and K-AND')
     histogram = {} # create output dictionary {k: ave AND}
     k_count = {} # records the number of k occurences
     for node in terminals: # for each node in the ave Nv degree dictionary
@@ -142,8 +126,7 @@ def get_histogram(AND_dict,adj_list,terminals):
         histogram[k] = float(histogram[k])/float(k_count[k]) # take the average
     if 0 in histogram.keys(): #if 0 is a k value in histogram
         del histogram[0] #delete it, as it will produce a log[0] error elsewhere
-    print('histogram: '+str(histogram))
-    print('k_count: '+str(k_count))
+    print('lengths: '+str(len(histogram)))
     return histogram, k_count
 #This is similar to the get_histogram() function, changes will be indicated
 #Histogram does not compare all nodes to all other nodes, but each node (loop 1)
@@ -163,19 +146,30 @@ def get_histogram(AND_dict,adj_list,terminals):
         del histogram[len(nodes)+1]     #which get initialized to len(nodes)+1 in distances function
     return histogram
 """
+# Inputs adj_list and positive set
+# Outputs dictionaries two dictionaries, the first of form {0:~104, 1:3,613,...}
+# indiating there are 104 positives 0 distance away from the positives, 3,613
+# a distance of 1 or less from any positive, which will continue up until key=7.
+# Remove by distane is used so as to return data on edges as well.
 def create_separation_dict(adj_list,positives):
     print('Starting Summary Statistics 2:\nSeparation')
     separation_nodes_dict = {0:len(positives)}
-    separation_edges_dict = {0:0}
+    separation_edges_dict = {} #Excludes 0:0 so log transformed plot does nor
+    # raise an issue
+    nodes = set() # sets needs to start off at 0 and enables the while loop
     removal_distance = 1
-    while nodes <= len(adj_list):
-        nodes, edges = remove_by_dist(adj_list,positives, r_distance)
+    while len(nodes) <= 17714: #17715 observed largest connected component
+        nodes, edges = remove_by_dist(adj_list,positives, removal_distance)
         separation_nodes_dict[deepcopy(removal_distance)] = deepcopy(len(nodes))
         separation_edges_dict[deepcopy(removal_distance)] = deepcopy(len(edges))
-    print('Number of nodes connected to positives \nby n degrees of separation: '+str(separation_nodes_dict))
-    print('Number of edges connected to positives \nby n degrees of separation: '+str(separation_edges_dict))
+        removal_distance += 1
     return separation_nodes_dict,separation_edges_dict
 
+# Application may be a stretch, as x and y values are usually related as a series
+# of n terms, i.e. (x1 y1), (x2, y2), . . . (xn, yn), while here x and y terms
+# follow the log transformation of the k: ave-AND data set.  In this analysis,
+# negatice slopes indicate disasortative networks, positive slopes indicated
+# asortative networks. x_ and y_ indicate averages.
 def get_P_correlation_coefficient(k_aveAND):
     sigma_x = float(sum(k_aveAND.keys())) # take the sum of the keys
     x_ = sigma_x/len(k_aveAND) # and divide by the No. of keys to get x average
@@ -193,36 +187,49 @@ def get_P_correlation_coefficient(k_aveAND):
         denominator_y += (yi_y_ ** 2)
     pcc = numerator/(math.sqrt(denominator_x)*math.sqrt(denominator_y))
     return pcc
-## Borrowed from group assignment, Kathy or Elaine's work (?).
-# Removal distance taken as an argument
-##I need to run BFS with every known positive node as a source node,
-## iteratively add if a node is within or equal to 4 units away
-def remove_by_dist(adj_list,positives, r_distance): #K.T
+## Borrowed from group assignment
+# Removal distance taken as an input argument
+## Runs BFS with every known positive node as a source node,
+# 'visited' had been part of the code shared with BFS, here it is removed.
+def remove_by_dist(adj_list,positives,removal_distance): #K.T
     print("Running remove_by_dist")##EEK
-    nodes = set()
-    visited = set()
-    for p in positives:
-    #if p in adj_list: # necessary?
-        test_distance, visited = BFS(adj_list, p , visited)
-        for node in test_distance:
-            if test_distance[node] <= r_distance:
-                nodes.add(node)
+    nodes = set() # Build new seet of include nodes
+    for p in positives: # for each positive regulator
+        test_distance = BFS(adj_list, p)# get a dict of dist to all other nodes
+        for node in test_distance:## for each node
+        ## if it is less than the removal distance to any positive regulator
+            if test_distance[node] <= removal_distance:
+                nodes.add(node) ##add that node to the new nodes set
     print('Length of processed nodes',len(nodes))
-    #         edge.append(1) ## doing this to make Steiner work
-    edges = set()
-    seen = set() #seen keeps track of redundant nodes
-    for v in adj_list:
-        if v in nodes:
-            for u in adj_list[v]:
+    edges = set()  ## Build new set of included edges
+    seen = set() ## seen keeps track of redundant nodes
+    for v in adj_list:  ##for each node in the adj_list (all in graph G)
+        if v in nodes: ## verify it is in the new nodes set
+            for u in adj_list[v]: ## for each of v's neighbors, u
+            ## if current u was not prior v and u is in new nodes
                 if u in nodes and u not in seen:
-                    edges.add(tuple([v,u,1]))
-        seen.add(v)
+                    edges.add(tuple([v,u,1])) ##rebuild an edge in new edge set
+        seen.add(v)  ## record that we've seen v to optimize our algorithm
     print('Length of processed edges',len(edges))
     print("Done with remove_by_dist!")
     return nodes, edges
 
-create_node_separation_plot(separation_nodes_dict,separation_edges_dict)
+##Used in remove by distance, perhaps this should get replaced by dijkstra's
+def BFS(adj_list, s): ##K.T(labtime)
+    LARGE_NUM = 100000000000 ## Initialize ~infinity
+    D = {n:LARGE_NUM for n in adj_list} ## build a distance dict for each node
+    D[s] = 0  ## Initilize starting node as 0 distance from itself
+    q = [s]  ## add the start to the front of the queue!
+    while len(q) != 0: ## While there is a queue
+        w = q.pop(0) ## grab the first one off the stack
+        for neighbor in adj_list[w]: ## and for each of its neighbors
+            if D[neighbor] == 100000000000:  ## if their distance is ~infinity
+                D[neighbor] = D[w]+1 ## make it just one more than current space
+                q.append(neighbor) ## and add this neighbor to the queue
+    return D  ## return the dctionary
+
 def create_K_count_plot(k_count,pos_k_count,neg_k_count):    #histogram of degrees created
+    print('Plotting Summary Statistics 1bI: K-Count')
     fig = plt.figure(figsize=(12,6))
 
     x1 = k_count.keys()
@@ -246,8 +253,6 @@ def create_K_count_plot(k_count,pos_k_count,neg_k_count):    #histogram of degre
     plt.plot(x1,y1,line1)
     plt.plot(x2,y2,line2)
     plt.plot(x3,y3,line3)
-    #plt.plot(x1,y1,line1)
-    #plt.plot(x2,y2,line2)
 
     plt.xlabel('k')
     plt.ylabel('Number of Nodes')
@@ -271,6 +276,7 @@ def create_K_count_plot(k_count,pos_k_count,neg_k_count):    #histogram of degre
 #I had trouble with running a loop using matplotlib, likely user error.
 #uses 'h_entry' to allow for generation of each histogram, degree, AND, & SPL.
 def create_K_AND_plot(degree_histogram, pos_degree_hist,neg_degree_hist):
+    print('Plotting Summary Statistics 1bII: K-average AND')
     fig = plt.figure(figsize=(12,6))
 
     x1 = degree_histogram.keys()
@@ -280,10 +286,10 @@ def create_K_AND_plot(degree_histogram, pos_degree_hist,neg_degree_hist):
     line1 = 'k.'
 
     (m,b) = np.polyfit(logx1,logy1,1)
-    pcc = get_P_correlation_coefficient(degree_histogram)
-    print('Pearson correlation coefficient for\nfull interactome log transformed x = k, y = AAND:'+str(pcc))
+    pcc1 = get_P_correlation_coefficient(degree_histogram)
+    print('Pearson correlation coefficient for full interactome, log transformed: '+str(round(pcc1,4)))
     print('linear fit of the log transformed full interactome set')
-    print('x1 and y1 y = mx + b, (m,b): '+str([m,b]))
+    print('y = '+str(round(m, 3))+'x + '+str(round(b,3)))
     lr1 = np.polyval([m,b],x1)
     line1lr = 'k.'
 
@@ -294,10 +300,10 @@ def create_K_AND_plot(degree_histogram, pos_degree_hist,neg_degree_hist):
     line2 = 'c.'
 
     (n,d) = np.polyfit(logx2,logy2,1)
-    pcc = get_P_correlation_coefficient(pos_degree_histogram)
-    print('Pearson correlation coefficient for\npositive set log transformed x = k, y = AAND:'+str(pcc))
+    pcc2 = get_P_correlation_coefficient(pos_degree_hist)
+    print('Pearson correlation coefficient for positive set, log transformed: '+str(round(pcc2,4)))
     print('linear fit of the log transformed positive set')
-    print('x2 and y2 lr y = mx + b, (m,b): '+str([n,d]))
+    print('y = '+str(round(n, 3))+'x + '+str(round(d,3)))
     lr2 = np.polyval([n,d],x2)
     line2lr = 'c.'
 
@@ -308,10 +314,10 @@ def create_K_AND_plot(degree_histogram, pos_degree_hist,neg_degree_hist):
     line3 = 'r.'
 
     (o,p) = np.polyfit(logx3,logy3,1)
-    pcc = get_P_correlation_coefficient(neg_degree_histogram)
-    print('Pearson correlation coefficient for\nnegative set log transformed x = k, y = AAND:'+str(pcc))
+    pcc3 = get_P_correlation_coefficient(neg_degree_hist)
+    print('Pearson correlation coefficient for negative set, log transformed: '+str(round(pcc3,4)))
     print('linear fit of the log transformed negative set')
-    print('x3 and y3 lr y = mx + b, (m,b): '+str([o,p]))
+    print('y = '+str(round(o, 3))+'x + '+str(round(p,3)))
     lr3 = np.polyval([n,d],x3)
     line3lr = 'r--'
 
@@ -329,9 +335,9 @@ def create_K_AND_plot(degree_histogram, pos_degree_hist,neg_degree_hist):
     plt.plot(logx1,logy1,line1)
     plt.plot(logx2,logy2,line2)
     plt.plot(logx3,logy3,line3)
-    plt.plot(logx1, lr1, line1lr)
-    plt.plot(logx2, lr2, line2lr)
-    plt.plot(logx3, lr3, line3lr)
+    #plt.plot(logx1, lr1, line1lr)
+    #plt.plot(logx2, lr2, line2lr)
+    #plt.plot(logx3, lr3, line3lr)
 
     plt.xlabel('log(x)')
     plt.ylabel('log(y)')
@@ -343,12 +349,13 @@ def create_K_AND_plot(degree_histogram, pos_degree_hist,neg_degree_hist):
     print('wrote to '+'Average AND Histogram'+'.png')
     return
 
-def create_separation_plot(separation_nodes_dict,separation_edges_dict)
+def create_separation_nodes_plot(separation_nodes_dict):
+    print('Plotting Summary Statistics 2: Nodes returned using remove_by_dist')
     fig = plt.figure(figsize=(12,6))
 
     x1 = separation_nodes_dict.keys()
     y1 = [separation_nodes_dict[xval] for xval in x1]
-    logx1 = [math.log(a) for a in x1]
+    #logx1 = [math.log(a) for a in x1]
     logy1 = [math.log(b) for b in y1]
     line1 = 'k:.'
 
@@ -356,14 +363,14 @@ def create_separation_plot(separation_nodes_dict,separation_edges_dict)
     plt.xlim([0,6])
     plt.plot(x1,y1,line1)
 
-    plt.xlabel('Distance of Separation from Positives')
+    plt.xlabel('Nodes of x Pathlength to Positives')
     plt.ylabel('Number of Nodes')
     plt.title('Separation Distribution')
 
     plt.subplot(1,2,2)  #generates subplot 2.
-    plt.plot(logx1,logy1,line1)
+    plt.plot(x1,logy1,line1)
 
-    plt.xlabel('log(x)')
+    plt.xlabel('Nodes of Pathlength x to Positives')
     plt.ylabel('log(y)')
     plt.title('Separation Distribution (log)')
 
@@ -371,6 +378,10 @@ def create_separation_plot(separation_nodes_dict,separation_edges_dict)
 
     plt.savefig('Node Count by Some Distance of Separation from Positives '+str(datetime.now())+'.png')
     print('wrote to '+'Node Count by Some Distance of Separation from Positives'+'.png')
+
+def create_separation_edges_plot(separation_edges_dict):
+    print('Plotting Summary Statistics 2: Edges returned using remove_by_dist')
+    fig = plt.figure(figsize=(12,6))
 
     x2 = separation_edges_dict.keys()
     y2 = [separation_edges_dict[xval] for xval in x2]
@@ -387,7 +398,7 @@ def create_separation_plot(separation_nodes_dict,separation_edges_dict)
     plt.title('Separation Distribution')
 
     plt.subplot(1,2,2)  #generates subplot 2.
-    plt.plot(logx2,logy2,line2)
+    plt.plot(x2,logy2,line2)
 
     plt.xlabel('log(x)')
     plt.ylabel('log(y)')
@@ -396,7 +407,7 @@ def create_separation_plot(separation_nodes_dict,separation_edges_dict)
     plt.tight_layout()
 
     plt.savefig('Edge Count by Some Distance of Separation from Positives'+str(datetime.now())+'.png')
-    print('wrote to '+'Degree Distribution'+'.png')
+    print('wrote to '+'Edge Count by Some Distance of Separation from Positives'+'.png')
 
     return
 

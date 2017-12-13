@@ -10,9 +10,8 @@ def main(): # EEK added comments to this
     # positives = "toy_pos_set.txt" #Positive node file (added by KT)
     print('Start: ' + str(datetime.now()))
 
-    interactome = "interactome-flybase.txt" #interactome file
-    positives = "positive-ids.txt" #Positive node file
-
+    interactome = "B331_Group/interactome-flybase.txt" #interactome file
+    positives = "B331_Group/positive-ids.txt" #Positive node file
 
     #read interactome and positive node files
     edges, nodes = read_edge_file(interactome)
@@ -26,42 +25,44 @@ def main(): # EEK added comments to this
 
     print('Done with Pre-Processing: ' + str(datetime.now()))
     # #generates a steiner tree, and set of non terminal nodes, and adj_list
-    steiner_tree,nonterminal_ST_nodes,steiner_adj_list = SteinerApprox(nodes,edges,positives)
+    #WG: Modified to return pi and D composite dictionaries to pass to BFS_rank
+    #Should cut run time in half
+    steiner_tree,nonterminal_ST_nodes,steiner_adj_list, pi_dict, distance_dict = SteinerApprox(nodes,edges,positives)
 
      # returns steiner tree nodes(from steiner edges out) as list of nodes
     all_nodes = steiner_edges_out(steiner_tree,'tree_edges')
 
     # steiner non-positive terminals (list of nodes)
     steiner_nodes_out(all_nodes, nonterminal_ST_nodes, 'tree_nodes')
-    
+
     print('Done with Steiner Tree: ' + str(datetime.now()))
     # # runs BFS on the processed nodes, adj_list from the steiner tree, and positive set
-    bfs_dict = bfs_rank(nodes,steiner_adj_list,positives)
+    dijkstra_ranking_dict = dijkstra_rank(nodes,steiner_adj_list,positives, pi_dict, distance_dict)
 
     # BFS rank (list of two item lists [[node,float],[node1, float1]])
-    BFS_rank_out(bfs_dict,'BFS_rank')
+    dijkstra_rank_out(dijksta_rank_dict,'Dijkstra_rank')
 
-    print('Done with BFS Rank: ' + str(datetime.now()))
+    print('Done with Dijkstra Rank: ' + str(datetime.now()))
 
     #Computes shortest paths given a node and adjacency list
     pos_node_dict, SP_nonterminal_nodes = shortest_paths(nodes, edges, positives)
-   
+
     # new_shortest_paths input (dictionary with key = non pos node, value = upstream pos node)
     shortest_paths_out(pos_node_dict, 'new_shortest_paths')
 
     print('Done with Shortest Paths: ' + str(datetime.now()))
-    # #Reassigns nodes and edges to be a subgraph 
-    # nodes,edges = select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict)
+    # #Reassigns nodes and edges to be a subgraph
+    # nodes,edges = select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,dijkstra_rank_dict)
 
-    
-    
+
+
     # #Posts subgraph to GraphSpace
     # title = 'Interactome draft'+str(datetime.now())
-    # post_graph(nodes,edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict,title)
-   
+    # post_graph(nodes,edges,nonterminal_ST_nodes,positives,steiner_tree,dijksta_rank_dict,title)
+
 
     print('Program Complete: ' + str(datetime.now()))
-    
+
 
 
 
@@ -168,6 +169,8 @@ def make_adj_list(edges,nodes): #K.T(labtime), but copied from Lab6 (anna)
 
 #Runs BFS with every known positive node as a source node,
 # adds if a node is within or equal to 4 units away
+"""WG: Debugging item: visited simply accumulates nodes until 17715, the size of
+the largest connected component."""
 #Input: adjacency list, set of positives
 #Output: set of nodes and set of edges containing nodes 4 or fewer paths from a positive node
 def remove_by_dist(adj_list,positives): #K.T, with debugging done by the entire group
@@ -175,7 +178,7 @@ def remove_by_dist(adj_list,positives): #K.T, with debugging done by the entire 
     nodes = set()
     visited = set()
     for p in positives:
-        if p in adj_list: 
+        if p in adj_list:
             test_distance, visited = BFS(adj_list, p , visited)
         for node in test_distance:
             if test_distance[node] <= 4:
@@ -229,7 +232,7 @@ def get_metric_closure(nodes,edges,terminals):
 
 
 ## Function uses a dictionary pi (see dijkstra's algorithm) implicitly including starting node 's', and an ending node as the second argument.
-#Input: 
+#Input:
 #Output:
 def get_path(pi,node):
     path = [node] ## path starts with the ending node (& works backwords)
@@ -238,8 +241,6 @@ def get_path(pi,node):
 ## + is used to append previous node to the start of the list, so it will become path[0] on next iteration.
         path = [pi[path[0]]] + path
     return path
-
-
 
 ## Make an adjacency list that contains the weights of each edge.(Anna)
 ## e.g., for edge (u,v), you can access the weight of that edge
@@ -265,8 +266,7 @@ def get_adj_list_with_weights(edges):
 
     return adj_list
 
-
-## Code reused from Lab6, which was developed collaboratively in class. 
+## Code reused from Lab6, which was developed collaboratively in class.
 #Input: nodes and edges of graph G
 #Output: the minimum spanning tree, which is a list of edges
 def kruskal(nodes,edges):
@@ -366,7 +366,7 @@ def SteinerApprox(nodes,edges,terminals): ##Miriam
         if i[1] not in terminals:
             nonterminal_ST_nodes.add(i[1])
     #print('nonterminal_ST_nodes: '+str(nonterminal_ST_nodes))
-    return T, nonterminal_ST_nodes, steiner_adj_list
+    return T, nonterminal_ST_nodes, steiner_adj_list, pi_dict, distance_dict
 
 
 ## Function updates the connected component based on an input of previous connected components and two nodes (the latter are the new edge in the min spanning tree).  Returns updated connected component.
@@ -402,27 +402,31 @@ def path_to_edges(path, adjacency): ##Miriam
         path_edges.append([node1,node2,weight])
     return path_edges
 
-#Input: list of nodes, an adj_ls, and list of terminal nodes
-#Output: a BFS dictionary of distances from positive nodes calculated by dijkstra's
-def bfs_rank(nodes,adj_list,terminals): ##Wyatt
-    #print('Running BFS rank')
-    bfs_dict = {}
+#Input: list of nodes, an adj_ls, list of terminal nodes,
+# pi dict (dict of pi dicts), and distance dict (dict of D dicts)
+#Output: a Dijkstra's ranked dictionary proportional to distances from positives
+def dijkstra_rank(nodes,adj_list,terminals,pi_dict,distance_dict): ##Wyatt
+    #print('Running Dijkstra rank')
+    dijkstra_rank_dict = {}
     for node in nodes:
         if node not in terminals:
-            bfs_dict[node]=0
+            dijkstra_rank_dict[node]=0
     for t in terminals:
-        D, pi = dijkstra(nodes,adj_list,t)
+        D = distance_dict[terminal]
         for key in D:
+    #for t in terminals:
+    #    D, pi = dijkstra(nodes,adj_list,t)
+    #    for key in D:
             if key not in terminals:
-                bfs_dict[key] += (1.0/D[key])
-    normalize_bfs_rank(bfs_dict)
-    #print('BFS ranking completed:'+str(bfs_dict))
-    return bfs_dict
+                dijkstra_rank_dict[key] += (1.0/D[key])
+    normalize_dijkstra_rank(dijkstra_rank_dict)
+    #print('Dijkstra ranking completed:'+str(dijkstra_rank_dict))
+    return dijkstra_rank_dict
 
 
 #Input: takes in a dictionary of nodes with ranks from bfs_rank
 #Output: a normalized dictionary using the maximum rank
-def normalize_bfs_rank(rank):##Wyatt
+def normalize_dijkstra_rank(rank):##Wyatt
     mxm = 0
     for node in rank:
         if rank[node] > mxm:
@@ -431,8 +435,8 @@ def normalize_bfs_rank(rank):##Wyatt
         rank[node] = rank[node]/mxm #normalizes the values
     return
 
-#Input: edges, non terminal nodes that were included in the steiner tree, 
-#a list of positive nodes, the list of edges from the steiner tree, 
+#Input: edges, non terminal nodes that were included in the steiner tree,
+#a list of positive nodes, the list of edges from the steiner tree,
 #and the bfs dictionary
 #Output: a new graph integrating this information
 def select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict):##Wyatt
@@ -502,7 +506,7 @@ def post_graph(nodes,edges,nonterminal_ST_nodes,terminals,steiner_tree,BFS_rank,
     for e in steiner_tree:
         G.add_edge_style(e[0],e[1],color='#000000',width=2)
         G.add_edge_style(e[1],e[0],color='#000000',width=2)
-    G.set_data(data={'Regulators':'Blue','top 100 BFS Rank':'Red','nonterminal_ST_nodes+':'green','Spanning Tree Edge':'Black','ST Node and BFS ranked':'Yellow (R+G)'})
+    G.set_data(data={'Regulators':'Blue','top 100 Dijkstra Rank':'Red','nonterminal_ST_nodes+':'green','Spanning Tree Edge':'Black','ST Node and Dijkstra ranked':'Yellow (R+G)'})
     try:
         graph = graphspace.update_graph(G)
         print('updated graph with title',title)
@@ -516,7 +520,7 @@ def post_graph(nodes,edges,nonterminal_ST_nodes,terminals,steiner_tree,BFS_rank,
 #This will compute shortest paths to a particular node
 #keeps track of the positive it is going from in a dictionary--{key is non-positive node: value is upstream pos nodes it came from}
 def shortest_paths(nodes,edges,terminals): ##KT, with help from Anna
-    print("Beginning shortest paths call") 
+    print("Beginning shortest paths call")
     pos_node_dict={} #will keep track of what positive comes with each node
     # T will build the full Steiner tree as a list of edges.
     adj_list = get_adj_list_with_weights(edges) #adj_list for edges of G
@@ -575,7 +579,7 @@ This works now!
 
 
 ##Input all_nodes is set of nodes from egdes_out and input non_pos_nodes is SET of non positive nodes
-#output is two columns, one is the node and the other is whether it is a positive node (N/Y) 
+#output is two columns, one is the node and the other is whether it is a positive node (N/Y)
 def steiner_nodes_out(all_nodes, non_term_nodes, filename): # Steiner
     out_file = open(str(filename)+'.txt','w')
     out_file.write('Node'+'\t'+'Terminal(Y/N)'+'\n')
@@ -589,10 +593,10 @@ def steiner_nodes_out(all_nodes, non_term_nodes, filename): # Steiner
 '''
 This works too!
 '''
-        
+
 #Input BFS_rank_list is a list of two item lists [[node,float],[node1, float1] ]
 #Output is two columns, one is the node and the other is the BFS rank
-def BFS_rank_out(BFS_rank_list, filename): # BFS rank 
+def Dijkstra_rank_out(BFS_rank_list, filename): # BFS rank
     out_file = open(str(filename)+'.txt','w')
     out_file.write('Node'+'\t'+'BFS_Rank'+'\n')
     for m in BFS_rank_list:
@@ -623,7 +627,7 @@ This works!
 
 
 #def compare_outputs:
-    ## Use this function ot read in output text files 
+    ## Use this function ot read in output text files
     ## compare the nodes that are present in them
 
 
