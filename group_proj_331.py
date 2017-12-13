@@ -37,11 +37,10 @@ def main(): # EEK added comments to this
 
     print('Done with Steiner Tree: ' + str(datetime.now()))
     # # runs BFS on the processed nodes, adj_list from the steiner tree, and positive set
-    dijkstra_ranking_dict = dijkstra_rank(nodes,steiner_adj_list,positives, pi_dict, distance_dict)
+    dijkstra_rank_dict,dijkstra_rank_list = dijkstra_rank(nodes,steiner_adj_list,positives, pi_dict, distance_dict)
 
     # BFS rank (list of two item lists [[node,float],[node1, float1]])
-    dijkstra_rank_out(dijksta_rank_dict,'Dijkstra_rank')
-
+    dijkstra_rank_out(dijkstra_rank_list,'Dijkstra_rank')
     print('Done with Dijkstra Rank: ' + str(datetime.now()))
 
     #Computes shortest paths given a node and adjacency list
@@ -406,49 +405,52 @@ def path_to_edges(path, adjacency): ##Miriam
 # pi dict (dict of pi dicts), and distance dict (dict of D dicts)
 #Output: a Dijkstra's ranked dictionary proportional to distances from positives
 def dijkstra_rank(nodes,adj_list,terminals,pi_dict,distance_dict): ##Wyatt
-    #print('Running Dijkstra rank')
+    print('Running Dijkstra rank')
     dijkstra_rank_dict = {}
     for node in nodes:
         if node not in terminals:
             dijkstra_rank_dict[node]=0
     for t in terminals:
-        D = distance_dict[terminal]
+        D = distance_dict[t]
         for key in D:
     #for t in terminals:
     #    D, pi = dijkstra(nodes,adj_list,t)
     #    for key in D:
             if key not in terminals:
                 dijkstra_rank_dict[key] += (1.0/D[key])
-    normalize_dijkstra_rank(dijkstra_rank_dict)
-    #print('Dijkstra ranking completed:'+str(dijkstra_rank_dict))
-    return dijkstra_rank_dict
+    dijkstra_rank_list = normalize_dijkstra_rank(dijkstra_rank_dict)
+    print('Dijkstra ranking completed:'+str(dijkstra_rank_list))
+    return dijkstra_rank_dict,dijkstra_rank_list
 
 
-#Input: takes in a dictionary of nodes with ranks from bfs_rank
-#Output: a normalized dictionary using the maximum rank
+#Input: takes in a dictionary of nodes with score from dijkstra_rank
+#Output: an ordered list of ranked nodes (highest to lowest), with
+#normalized (according to the maximum) scores
 def normalize_dijkstra_rank(rank):##Wyatt
-    mxm = 0
-    for node in rank:
-        if rank[node] > mxm:
-            mxm = rank[node]
-    for node in rank:
-        rank[node] = rank[node]/mxm #normalizes the values
-    return
+    mxm = 0 # Used to find maximum value
+    for node in rank: # for each ranked node
+        if rank[node] > mxm: # If its score is higher than current maximum
+            mxm = rank[node] # Make maximum equal to that score
+    for node in rank: # For every ranked node
+        rank[node] = rank[node]/mxm #normalizes it by the maximum
+
+    dijkstra_rank_list = [] # Build a list to sort
+    for node in rank: # For each ranked node
+        dijkstra_rank_list.append([node,rank[node]]) # Add [node,score] to the list
+    dijkstra_rank_list = sorted(dijkstra_rank_list, key=lambda x:x[1],reverse = True)
+    return dijkstra_rank_list
 
 #Input: edges, non terminal nodes that were included in the steiner tree,
 #a list of positive nodes, the list of edges from the steiner tree,
 #and the bfs dictionary
 #Output: a new graph integrating this information
-def select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,bfs_dict):##Wyatt
-    bfs_list = []
+def select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,dijkstra_rank_list):##Wyatt
     subedges = set()
-    for node in bfs_dict:
-        bfs_list.append([node,bfs_dict[node]])
-    subnodes = sorted(bfs_list, key=lambda x:x[1],reverse = True)
-    subnodes = [item[0] for item in subnodes]
+    subnodes = dijkstra_rank_list
     if len(subnodes) >= 100:
         subnodes = subnodes[0:100]
-    print('100 highest BFS rank: '+str(subnodes)) ##KT:sorts out the 100 best BFS ranked nodes
+    print('100 highest BFS rank: '+str(subnodes)) ##KT:sorts out the 100 best ranked nodes
+    subnodes = [item[0] for item in subnodes]
     subnodes = subnodes + list(positives)
     subnodes = set(subnodes).union(nonterminal_ST_nodes)
     for edge in update_edges(subnodes,edges):
@@ -456,6 +458,7 @@ def select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,bf
     subedges.union(steiner_tree) #adds the steiner tree
     print('subedges: '+str(subedges))
     return subnodes,subedges
+
 
 ## Template code provided by Anna in Lab4 pdf.
 #Input: floats
