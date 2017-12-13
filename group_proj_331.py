@@ -10,8 +10,8 @@ def main(): # EEK added comments to this
     # positives = "toy_pos_set.txt" #Positive node file (added by KT)
     print('Start: ' + str(datetime.now()))
 
-    interactome = "B331_Group/interactome-flybase.txt" #interactome file
-    positives = "B331_Group/positive-ids.txt" #Positive node file
+    interactome = "interactome-flybase.txt" #interactome file
+    positives = "positive-ids.txt" #Positive node file
 
     #read interactome and positive node files
     edges, nodes = read_edge_file(interactome)
