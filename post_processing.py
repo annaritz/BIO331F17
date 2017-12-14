@@ -46,6 +46,12 @@ def main():
 
 	# alphabetizes intersection of all sets
 	all_set_alpha = alphabetize(all_set)
+
+	#gets all proteins seen in any output
+	union_of_steiner_dijkstra = steiner_nt_common.union(dijkstra_common)
+	union_of_all = union_of_steiner_dijkstra.union(new_shortest_common) 
+
+	union_alpha = alphabetize(union_of_all)
 	
 
 	# Prints alphabetized outputs
@@ -56,7 +62,9 @@ def main():
 	print('Dijkstra and Shortest Paths : ',dijkstra_shortest_alpha)
 	print('Steiner and Dijkstra Candidates: ', steiner_dijkstra_alpha, len(steiner_dijkstra_alpha))
 
-	print('Candidates present in all outputs:', all_set_alpha)
+	print('Candidates present in all outputs:', all_set_alpha, len(all_set_alpha))
+
+	print('Union of all candidates: ', union_alpha, len(union_alpha))
 
 
 	return
