@@ -60,7 +60,8 @@ def read_tree_nodes(filename):
 	return terminal_nodes, non_terminal_nodes
 
 
-
+## Input file: 'BFS_rank.txt'
+## Outputs set of nodes in BFS
 def read_BFS_rank(filename):
 	BFS_nodes = set()
 	with open (filename, 'r') as f:
@@ -72,6 +73,9 @@ def read_BFS_rank(filename):
 	print('BFS Nodes:', BFS_nodes)
 	return BFS_nodes
 
+
+## Input file: 'new_shortest_paths.txt'
+## Outputs set of nodes that are keys in new_shortest_paths
 def read_new_shortest_paths(filename):
 	shortest_paths_nodes = set()
 	with open (filename, 'r') as f:
@@ -95,7 +99,7 @@ def FB_to_common(node_set, common_names_dict):
 	return new_set
 
 
-## checks to see if 
+## returns intersection of two sets (common elements)
 def in_both_sets(set1, set2):
 	both_set = set1.intersection(set2)
 	return both_set

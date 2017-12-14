@@ -36,19 +36,46 @@ def main(): # EEK, KT added comments to this
 
     print('Done with Pre-Processing: ' + str(datetime.now()))
     # #generates a steiner tree, and set of non terminal nodes, and adj_list
+<<<<<<< HEAD
     #WG: Modified to return pi and D composite dictionaries to pass to dijkstra_rank
+=======
+
+    
+    #steiner_tree,nonterminal_ST_nodes,steiner_adj_list = SteinerApprox(nodes,edges,positives)
+
+    #WG: Modified to return pi and D composite dictionaries to pass to BFS_rank
+>>>>>>> 9212697509df3b8e48425dfa03a9ad2cbca801d7
     #Should cut run time in half
     steiner_tree,nonterminal_ST_nodes,steiner_adj_list, pi_dict, distance_dict = SteinerApprox(nodes,edges,positives)
 
+
      # returns steiner tree nodes(from steiner edges out) as list of nodes
-    all_nodes = steiner_edges_out(steiner_tree,'tree_edges')
+    #all_nodes = steiner_edges_out(steiner_tree,'tree_edges')
 
     # steiner non-positive terminals (list of nodes)
+
+    #steiner_nodes_out(all_nodes, nonterminal_ST_nodes, 'tree_nodes')
+    
+    #steiner_adj_list_file(steiner_adj_list, 'steiner_adj_list')
+
     steiner_nodes_out(all_nodes, nonterminal_ST_nodes, 'tree_nodes')
 
+
+    steiner_adj_list = adj_list_read('steiner_adj_list.txt')
     print('Done with Steiner Tree: ' + str(datetime.now()))
+<<<<<<< HEAD
     # runs Dijkstra's on the processed nodes, adj_list from the steiner tree, and positive set
     dijkstra_rank_list = dijkstra_rank(nodes,steiner_adj_list,positives, pi_dict, distance_dict)
+=======
+    # # runs BFS on the processed nodes, adj_list from the steiner tree, and positive set
+
+    bfs_dict = bfs_rank(nodes,steiner_adj_list,positives)
+    # BFS rank
+    BFS_rank_out(bfs_dict,'BFS_rank')
+
+    dijkstra_rank_dict,dijkstra_rank_list = dijkstra_rank(nodes,steiner_adj_list,positives, pi_dict, distance_dict)
+>>>>>>> 9212697509df3b8e48425dfa03a9ad2cbca801d7
+
 
     # BFS rank (list of two item lists [[node,float],[node1, float1]])
     dijkstra_rank_out(dijkstra_rank_list,'Dijkstra_rank')
@@ -596,11 +623,14 @@ def Dijkstra_rank_out(BFS_rank_list, filename): # BFS rank
     out_file = open(str(filename)+'.txt','w')
     out_file.write('Node'+'\t'+'BFS_Rank'+'\n')
     for m in BFS_rank_list:
+
+        out_file.write(str(m) + '\t' + str(FS_rank_list[m]) + '\n')
         for i in range(len(m)):
             if i == 0:
                 out_file.write(str(m[i]) + '\t')
             else:
                 out_file.write(str(m[i]) + '\n')
+
     out_file.close()
 
 '''
@@ -620,6 +650,11 @@ def shortest_paths_out(dict, filename): # new shortest paths
 '''
 This works!
 '''
+
+def steiner_adj_list_file(adj_list, filename):
+    out_file = open(str(filename)+'.txt','w')
+    out_file.write(str(adj_list))
+    out_file.close()
 
 
 #def compare_outputs:
