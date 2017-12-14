@@ -26,21 +26,22 @@ def main(): # EEK added comments to this
 
     print('Done with Pre-Processing: ' + str(datetime.now()))
     # #generates a steiner tree, and set of non terminal nodes, and adj_list
-    steiner_tree,nonterminal_ST_nodes,steiner_adj_list = SteinerApprox(nodes,edges,positives)
+    
+    #steiner_tree,nonterminal_ST_nodes,steiner_adj_list = SteinerApprox(nodes,edges,positives)
 
      # returns steiner tree nodes(from steiner edges out) as list of nodes
-    all_nodes = steiner_edges_out(steiner_tree,'tree_edges')
+    #all_nodes = steiner_edges_out(steiner_tree,'tree_edges')
 
     # steiner non-positive terminals (list of nodes)
-    steiner_nodes_out(all_nodes, nonterminal_ST_nodes, 'tree_nodes')
+    #steiner_nodes_out(all_nodes, nonterminal_ST_nodes, 'tree_nodes')
     
-    steiner_adj_list_file(steiner_adj_list, 'steiner_adj_list')
+    #steiner_adj_list_file(steiner_adj_list, 'steiner_adj_list')
 
+    steiner_adj_list = adj_list_read('steiner_adj_list.txt')
     print('Done with Steiner Tree: ' + str(datetime.now()))
     # # runs BFS on the processed nodes, adj_list from the steiner tree, and positive set
     bfs_dict = bfs_rank(nodes,steiner_adj_list,positives)
-    normalize_bfs_rank(bfs_dict)
-    # BFS rank (list of two item lists [[node,float],[node1, float1]])
+    # BFS rank
     BFS_rank_out(bfs_dict,'BFS_rank')
 
     print('Done with BFS Rank: ' + str(datetime.now()))
@@ -598,7 +599,7 @@ def BFS_rank_out(BFS_rank_list, filename): # BFS rank
     out_file = open(str(filename)+'.txt','w')
     out_file.write('Node'+'\t'+'BFS_Rank'+'\n')
     for m in BFS_rank_list:
-        out_file.write(str(m) + '\t' + BFS_rank_list[m] + '\n')
+        out_file.write(str(m) + '\t' + str(FS_rank_list[m]) + '\n')
     out_file.close()
 
 '''
@@ -623,9 +624,6 @@ def steiner_adj_list_file(adj_list, filename):
     out_file = open(str(filename)+'.txt','w')
     out_file.write(str(adj_list))
     out_file.close()
-'''
-This works!
-'''
 
 def adj_list_read(filename):
     with open (filename, 'r') as f:
@@ -633,9 +631,6 @@ def adj_list_read(filename):
             k = line 
     return k
 
-'''
-This works!
-'''
 
 if __name__ == '__main__':
     main()
