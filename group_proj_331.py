@@ -1,13 +1,24 @@
+# Computational Investigation of Fog Signaling Pathway
+#
+# What it does: This code will generate a list of potential regulators from a protein-protein interactome and a file of positive regulators
+# containing interactions between nodes using pre-processing techniques, Steiner Tree Approximations, Dijkstra-ranking, and a shortest paths algorithm. 
+# 
+# 
+# 
+# Input: a plain text file, formatted into at least 2 columns to indicate node to node interaction, a text file of regulators
+# Output: Text file of the edge list of the Steiner Tree and a file containing all nodes within it , text files of potential regulators ranked by the Dijkstra-ranking
+#         and text files of potential regulators calculated by the shortest-paths algorithm
+# Authors: Miriam Bern, Wyatt Gormley, Elaine Kushkowski, Kathy Thompson, Logan Tibbetts, and Anna Ritz
+# Runtime note: This code takes at least 3 hours to run.
+
 from __future__ import print_function # (needed for python2 vs. python3)
 from graphspace_python.api.client import GraphSpace
 from graphspace_python.graphs.classes.gsgraph import GSGraph
 from datetime import datetime
 
-def main(): # EEK added comments to this
+def main(): # EEK, KT added comments to this
     #Input files
 
-    # interactome = "toy_dataset.txt" #interactome file (added by KT)
-    # positives = "toy_pos_set.txt" #Positive node file (added by KT)
     print('Start: ' + str(datetime.now()))
 
     interactome = "interactome-flybase.txt" #interactome file
@@ -25,7 +36,7 @@ def main(): # EEK added comments to this
 
     print('Done with Pre-Processing: ' + str(datetime.now()))
     # #generates a steiner tree, and set of non terminal nodes, and adj_list
-    #WG: Modified to return pi and D composite dictionaries to pass to BFS_rank
+    #WG: Modified to return pi and D composite dictionaries to pass to dijkstra_rank
     #Should cut run time in half
     steiner_tree,nonterminal_ST_nodes,steiner_adj_list, pi_dict, distance_dict = SteinerApprox(nodes,edges,positives)
 
@@ -36,8 +47,8 @@ def main(): # EEK added comments to this
     steiner_nodes_out(all_nodes, nonterminal_ST_nodes, 'tree_nodes')
 
     print('Done with Steiner Tree: ' + str(datetime.now()))
-    # # runs BFS on the processed nodes, adj_list from the steiner tree, and positive set
-    dijkstra_rank_dict,dijkstra_rank_list = dijkstra_rank(nodes,steiner_adj_list,positives, pi_dict, distance_dict)
+    # runs Dijkstra's on the processed nodes, adj_list from the steiner tree, and positive set
+    dijkstra_rank_list = dijkstra_rank(nodes,steiner_adj_list,positives, pi_dict, distance_dict)
 
     # BFS rank (list of two item lists [[node,float],[node1, float1]])
     dijkstra_rank_out(dijkstra_rank_list,'Dijkstra_rank')
@@ -56,7 +67,7 @@ def main(): # EEK added comments to this
 
 
     # #Posts subgraph to GraphSpace
-    # title = 'Interactome draft'+str(datetime.now())
+    # title = 'Interactome'+str(datetime.now())
     # post_graph(nodes,edges,nonterminal_ST_nodes,positives,steiner_tree,dijksta_rank_dict,title)
 
 
@@ -77,16 +88,15 @@ def read_edge_file(filename): ##taken from L.T.'s code and then edited by K.T (l
     with open (filename, 'r') as f:
         s = f.readline() #takes away header
         for line in f:
-            k = line.strip().split() #this is only for the toy dataset. split on tabs otherwise
+            k = line.strip().split("\t")
             k = k[0:2]
             k.append(1) ## EEK, adds edge weight 1 to every edge, used for calculating get_adj_list_with_weights
             edges.add(tuple(k))
             nodes.add(k[0])
             nodes.add(k[1])
-    #print('Number of edges: '+str(len(edges)))
-    #print('Number of nodes: '+str(len(nodes)))
     return edges,nodes
-# Input: text file containing positive nodes, set of all nodes
+
+# Input: text file containing positive nodes, set of all nodes in the interactome
 # Output: set of all positive nodes in the interactome
 def read_id_file(filename,nodes): #K.T (labtime)
     positives = set()
@@ -95,14 +105,14 @@ def read_id_file(filename,nodes): #K.T (labtime)
             k = line.strip().split()
             if k[0] in nodes:
                 positives.add(k[0])
-    #print('Number of positive nodes: '+str(len(positives)))
     return positives
 
-##Network Pre-processing
+##Network Pre-Processing
+
 #Update edges given a set of nodes
 #removes all edges/nodes from the graph that do not include nodes in given set
 #Input: visited - a connected component, set of edges
-#Output: nes edge set that only containes edges in the connected component
+#Output: new edge set that only containes edges in the connected component
 def update_edges(visited,edges): #KT
     removing_edges = set()
     for edge in edges:
@@ -114,19 +124,6 @@ def update_edges(visited,edges): #KT
     return edges
 
 
-##Not used
-##Checks to see if the positives and negatives are in the graph
-#Input: graph(nodes and edges) and sets of positive and negative nodes
-#Output: modifies pos and neg by removing nodes not in graph
-def check_pos_negs(graph, positives, negatives): # K.T.
-    for a in positives:
-        if a not in nodes:
-            trash = pos.pop(a)
-    for a in negatives:
-        if a not in nodes:
-            trash.neg.pop(a)
-
-
 ##make sure the graph is connected, if not, takes the largest component by running BFS
 #Input: adjacency list and list of nodes
 #Output: set of nodes in the connected component
@@ -134,7 +131,7 @@ def check_connected(adj_list, nodes): #K.T(labtime)
     visited = set()
     for node in nodes:
         if node not in visited:
-            distances,visited = BFS(adj_list, node, visited)
+            distances,visited = BFS(adj_list, node, visited) #runs BFS on each node, and checks if we can reach it with breadth first search
     return visited
 
 
@@ -142,17 +139,17 @@ def check_connected(adj_list, nodes): #K.T(labtime)
 #Output: D - dictionary of number of visits per node, visited- the total number of nodes we were able to reach with BFS
 def BFS(adj_list, s, visited): #K.T(labtime) ##from HW3.py
     LARGE_NUM = 100000000000
-    D = {n:LARGE_NUM for n in adj_list}
-    D[s] = 0
-    q = [s]
-    while len(q) != 0:
-        w = q.pop(0)
-        visited.add(w)
-        for neighbor in adj_list[w]:
-            if D[neighbor] == 100000000000:
-                D[neighbor] = D[w]+1
-                q.append(neighbor)
-    return D,visited
+    D = {n:LARGE_NUM for n in adj_list} # assigns everything that we are considering a distance of "infinity"
+    D[s] = 0 #initializes start node's distance to be 0
+    q = [s] #puts the start node in the queue to "search" for neighbors
+    while len(q) != 0: #while we can reach something that we haven't seen
+        w = q.pop(0) # remove the current node from the queue and find neighbors
+        visited.add(w) # add that to "visited"
+        for neighbor in adj_list[w]: #search for neighbors of that node
+            if D[neighbor] == 100000000000: # if we haven't seen it before
+                D[neighbor] = D[w]+1 # reassign distance to be the distance from the node being considered, plus 1 (to account for it being a neighbor)
+                q.append(neighbor) # now go through the neighbors of the neighbor
+    return D,visited 
 
 
 ##function returns an unweighted adjacency list
@@ -161,7 +158,7 @@ def BFS(adj_list, s, visited): #K.T(labtime) ##from HW3.py
 def make_adj_list(edges,nodes): #K.T(labtime), but copied from Lab6 (anna)
     adj_list = {n:[] for n in nodes}  ## another way to initialize dictonaries
     for e in edges:
-        adj_list[e[0]].append(e[1]) #use adjacency list
+        adj_list[e[0]].append(e[1]) 
         adj_list[e[1]].append(e[0])
     return adj_list
 
@@ -172,40 +169,38 @@ def make_adj_list(edges,nodes): #K.T(labtime), but copied from Lab6 (anna)
 the largest connected component."""
 #Input: adjacency list, set of positives
 #Output: set of nodes and set of edges containing nodes 4 or fewer paths from a positive node
-def remove_by_dist(adj_list,positives): #K.T, with debugging done by the entire group
+def remove_by_dist(adj_list,positives): #K.T, with debugging done by all
     #print("Running remove_by_dist")##EEK
-    nodes = set()
-    visited = set()
-    for p in positives:
-        if p in adj_list:
-            test_distance, visited = BFS(adj_list, p , visited)
-        for node in test_distance:
-            if test_distance[node] <= 4:
+    nodes = set() #initialize a set of nodes
+    visited = set() # initialize a set of visited nodes
+    for p in positives: #for every node in the positive set
+        if p in adj_list: # if the positive is in the adjacency list we passed it
+            test_distance, visited = BFS(adj_list, p , visited) # gets the distance from each node in the adjacency list to the considered positive
+        for node in test_distance: # for each node in the distance dictionary from that positive
+            if test_distance[node] <= 4: # if it is less than 4, add it to our new set of nodes
                 nodes.add(node)
     #print('Number of processed nodes: ',len(nodes))
-    #         edge.append(1) ## doing this to make Steiner work
-    edges = set()
+    #         edge.append(1) ## doing this to make Steiner work, since it needs weights to run
+    edges = set() # initializes new edge set
     seen = set() #seen keeps track of redundant nodes
-    for v in adj_list:
-        if v in nodes:
-            for u in adj_list[v]:
-                if u in nodes and u not in seen:
-                    edges.add(tuple([v,u,1]))
-        seen.add(v)
-    #print('Length of processed edges',len(edges))
-    #print("Done with remove_by_dist!")
+    for v in adj_list: # for each node in the adjacency list
+        if v in nodes: # if it is in the new set of nodes
+            for u in adj_list[v]: # for each neighbor of that node
+                if u in nodes and u not in seen: # if that neighbor is in the new set of nodes and it hasn't been seen
+                    edges.add(tuple([v,u,1])) # add it to the new edge set
+        seen.add(v) # then add the node we considered, because we have seen it now
     return nodes, edges
 
 
 #Input: adjacency list
 #Output: edge list (set)
-def adj_to_edge(adj_list): ##labtime, possibly EEK
+def adj_to_edge(adj_list): ##labtime, EEK
     edges = set()
-    for a in adj_list:
-        for n in adj_list[a]:
-            edge = [a,n]
-            if [n,a] not in edges:
-                edges.add(edge)
+    for a in adj_list: # for each node
+        for n in adj_list[a]: #goes through all nodes that are neighbors of the top-level node 
+            edge = [a,n] #creates an edge to show they are neighbors
+            if [n,a] not in edges: #checks for duplicates of the edge created
+                edges.add(edge) # adds it to the edge set
     return edges
 
 # Input: set of nodes, list of edges, and a set of terminals as inputs
@@ -231,8 +226,6 @@ def get_metric_closure(nodes,edges,terminals):
 
 
 ## Function uses a dictionary pi (see dijkstra's algorithm) implicitly including starting node 's', and an ending node as the second argument.
-#Input:
-#Output:
 def get_path(pi,node):
     path = [node] ## path starts with the ending node (& works backwords)
 ##So long as there is a previous path, pi[path[0]] does not return None.  In that case, the loop ends.
@@ -244,8 +237,8 @@ def get_path(pi,node):
 ## Make an adjacency list that contains the weights of each edge.(Anna)
 ## e.g., for edge (u,v), you can access the weight of that edge
 ## with adj_list[u][v] OR adj_list[v][u]
-## INPUT: 3-element list of edges [node1,node2,weight]
-## OUTPUT: dictionary of dictionaries
+## Input: 3-element list of edges [node1,node2,weight]
+## Output: dictionary of dictionaries
 def get_adj_list_with_weights(edges):
     adj_list = {}
     for u,v,w in edges: ## another way to specify elements of key
@@ -263,7 +256,7 @@ def get_adj_list_with_weights(edges):
         ## Add the key-value pair (u,w) to adj_list[v]
         adj_list[v][u] = w
 
-    return adj_list
+    return adj_list #AR
 
 ## Code reused from Lab6, which was developed collaboratively in class.
 #Input: nodes and edges of graph G
@@ -273,13 +266,17 @@ def kruskal(nodes,edges):
     C = set() # set of connected components initialized
     for node in nodes:
         C.add(frozenset([node]))
-    edges = sorted(edges, key=lambda x:x[2]) #in-line function selects the index to for the sorted function to look at
+    edges = sorted(edges, key=lambda x:x[2]) #in-line function selects the index for the sorted function to look at
     for edge in edges:
-    	if acyclic(edge[0],edge[1],C): #renamed based off T property
+    	if acyclic(edge[0],edge[1],C): #checks if the tree created is acyclic
     		T.append(edge) #build spanning tree
     		update_c(edge[0],edge[1],C)
     return T
 ## code developed collaboratively in class.  Modifications noted in #
+
+#Checks to see if a tree is acyclic, given a new edge and connected component
+#Input: 2 nodes, and a connected component
+#Output: boolean value evaluating if the new edge would introduce a cycle into the component
 def acyclic(node1,node2,C):
 	for item in C: ##for each item in a connected component
 ## check if new edge (node1,node2) creates a cycle
@@ -287,7 +284,7 @@ def acyclic(node1,node2,C):
 			return False # If so, the addition will not be acyclic
 	return True
 
-## Run Dijkstra's in the weighted, undirected graph. (from Anna)
+## Run Dijkstra's in the weighted, undirected graph. 
 ## INPUT: set of nodes, 3-element list of edges [node1,node2,weight], source s
 ## OUTPUT: Dictionary of distances (D), Dictionary of predecessors (pi)
 def dijkstra(nodes,adj_list,s):
@@ -335,13 +332,13 @@ def dijkstra(nodes,adj_list,s):
                 pi[x] = w ## update the predecessor (we came from w)
                 Q[x] = D[x] ## update the entry in the queue
 
-    return D,pi
+    return D,pi#AR
 
 
 
 #Input: a list of nodes, edges, and terminal nodes L
 #Output: the Steiner Tree of the graph as a set of edges and a list of Steiner Tree nodes
-def SteinerApprox(nodes,edges,terminals): ##Miriam
+def SteinerApprox(nodes,edges,terminals): ##MB
     #print("Beginning Steiner Approximation") ##EEK
     # Following solves for weighted edges of the metric closure.  The adj_list is not dependent on a start node, so it is run once and passed throughout the algorithm.
     mc_edges,steiner_adj_list,pi_dict,distance_dict = get_metric_closure(nodes,edges,terminals)
@@ -357,14 +354,12 @@ def SteinerApprox(nodes,edges,terminals): ##Miriam
             if i <= len(P)-2: # Up until the second to last index
                 if tuple([P[i],P[i+1]]) not in T and tuple([P[i+1],P[i]]) not in T:
                     T.add(tuple([P[i],P[i+1]])) # Add the edge to T
-    #print('steiner tree: '+str(T))
     nonterminal_ST_nodes = set()
     for i in T:
         if i[0] not in terminals:
-            nonterminal_ST_nodes.add(i[0])
+            nonterminal_ST_nodes.add(i[0])# each node part of the steiner tree and that is not a terminal node is added
         if i[1] not in terminals:
             nonterminal_ST_nodes.add(i[1])
-    #print('nonterminal_ST_nodes: '+str(nonterminal_ST_nodes))
     return T, nonterminal_ST_nodes, steiner_adj_list, pi_dict, distance_dict
 
 
@@ -392,7 +387,7 @@ def update_c(node1,node2,C):
 
 #Input: path as a list of nodes, adjacency list
 #Output: the path as a list of weighted edges
-def path_to_edges(path, adjacency): ##Miriam
+def path_to_edges(path, adjacency): ##MB
     path_edges = []
     for i in range(len(path)-1):
         node1 = path[i] #first node in the edge - source
@@ -401,32 +396,30 @@ def path_to_edges(path, adjacency): ##Miriam
         path_edges.append([node1,node2,weight])
     return path_edges
 
+#Dijkstra's Ranking
 #Input: list of nodes, an adj_ls, list of terminal nodes,
-# pi dict (dict of pi dicts), and distance dict (dict of D dicts)
+# pi dict (dict of pi dicts), and distance dict (dict of D dicts)(distance dictionary from metric_closure function)
 #Output: a Dijkstra's ranked dictionary proportional to distances from positives
-def dijkstra_rank(nodes,adj_list,terminals,pi_dict,distance_dict): ##Wyatt
+def dijkstra_rank(nodes,adj_list,terminals,pi_dict,distance_dict): ##WG
     print('Running Dijkstra rank')
-    dijkstra_rank_dict = {}
-    for node in nodes:
+    dijkstra_rank_dict = {} # initializes the dictionary
+    for node in nodes: # for each node in the node list 
         if node not in terminals:
-            dijkstra_rank_dict[node]=0
-    for t in terminals:
-        D = distance_dict[t]
-        for key in D:
-    #for t in terminals:
-    #    D, pi = dijkstra(nodes,adj_list,t)
-    #    for key in D:
-            if key not in terminals:
-                dijkstra_rank_dict[key] += (1.0/D[key])
-    dijkstra_rank_list = normalize_dijkstra_rank(dijkstra_rank_dict)
+            dijkstra_rank_dict[node]=0 # if not a positive, assign a rank of 0
+    for t in terminals: # for every node in the positives
+        D = distance_dict[t] #references the distance from a particular positive to all other nodes in the steiner tree
+        for key in D: # for each node distance from the positive
+            if key not in terminals: # if the node is not a positive itself
+                dijkstra_rank_dict[key] += (1.0/D[key]) #assigns it a rank based on the distance to nodes
+    dijkstra_rank_list = normalize_dijkstra_rank(dijkstra_rank_dict) #creates a list of two-element lists containing [node, rank]
     print('Dijkstra ranking completed:'+str(dijkstra_rank_list))
-    return dijkstra_rank_dict,dijkstra_rank_list
+    return dijkstra_rank_list
 
 
 #Input: takes in a dictionary of nodes with score from dijkstra_rank
 #Output: an ordered list of ranked nodes (highest to lowest), with
 #normalized (according to the maximum) scores
-def normalize_dijkstra_rank(rank):##Wyatt
+def normalize_dijkstra_rank(rank):##WG
     mxm = 0 # Used to find maximum value
     for node in rank: # for each ranked node
         if rank[node] > mxm: # If its score is higher than current maximum
@@ -437,14 +430,14 @@ def normalize_dijkstra_rank(rank):##Wyatt
     dijkstra_rank_list = [] # Build a list to sort
     for node in rank: # For each ranked node
         dijkstra_rank_list.append([node,rank[node]]) # Add [node,score] to the list
-    dijkstra_rank_list = sorted(dijkstra_rank_list, key=lambda x:x[1],reverse = True)
+    dijkstra_rank_list = sorted(dijkstra_rank_list, key=lambda x:x[1],reverse = True) #return a sorted list according to rank values
     return dijkstra_rank_list
 
 #Input: edges, non terminal nodes that were included in the steiner tree,
 #a list of positive nodes, the list of edges from the steiner tree,
-#and the bfs dictionary
+#and the dijkstra dictionary
 #Output: a new graph integrating this information
-def select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,dijkstra_rank_list):##Wyatt
+def select_subgraph_to_post(edges,nonterminal_ST_nodes,positives,steiner_tree,dijkstra_rank_list):##WG
     subedges = set()
     subnodes = dijkstra_rank_list
     if len(subnodes) >= 100:
