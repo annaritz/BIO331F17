@@ -2,9 +2,7 @@
 #
 # What it does: This code will generate a list of potential regulators from a protein-protein interactome and a file of positive regulators
 # containing interactions between nodes using pre-processing techniques, Steiner Tree Approximations, Dijkstra-ranking, and a shortest paths algorithm. 
-# 
-# 
-# 
+#
 # Input: a plain text file, formatted into at least 2 columns to indicate node to node interaction, a text file of regulators
 # Output: Text file of the edge list of the Steiner Tree and a file containing all nodes within it , text files of potential regulators ranked by the Dijkstra-ranking
 #         and text files of potential regulators calculated by the shortest-paths algorithm
@@ -15,7 +13,6 @@ from __future__ import print_function # (needed for python2 vs. python3)
 from graphspace_python.api.client import GraphSpace
 from graphspace_python.graphs.classes.gsgraph import GSGraph
 from datetime import datetime
-import heapq
 
 def main(): # EEK, KT added comments to this
     #Input files
@@ -134,18 +131,6 @@ def update_edges(visited,edges): #KT
     edges = edges - removing_edges
     return edges
 
-
-##make sure the graph is connected, if not, takes the largest component by running BFS
-#Input: adjacency list and list of nodes
-#Output: set of nodes in the connected component
-def check_connected(adj_list, nodes): #K.T(labtime)
-    visited = set()
-    for node in nodes:
-        if node not in visited:
-            distances,visited = BFS(adj_list, node, visited) #runs BFS on each node, and checks if we can reach it with breadth first search
-    return visited
-
-
 #Input: adjacency list, starting node, and connected component set (visited)
 #Output: D - dictionary of number of visits per node, visited- the total number of nodes we were able to reach with BFS
 def BFS(adj_list, s, visited): #K.T(labtime) ##from HW3.py
@@ -162,7 +147,6 @@ def BFS(adj_list, s, visited): #K.T(labtime) ##from HW3.py
                 q.append(neighbor) # now go through the neighbors of the neighbor
     return D,visited 
 
-
 ##function returns an unweighted adjacency list
 #Input: set of edges and set of nodes
 # Output: adjacency list dictionary with nodes as keys and neighbor lists as values
@@ -172,45 +156,6 @@ def make_adj_list(edges,nodes): #K.T(labtime), but copied from Lab6 (anna)
         adj_list[e[0]].append(e[1]) 
         adj_list[e[1]].append(e[0])
     return adj_list
-
-
-#Runs BFS with every known positive node as a source node,
-# adds if a node is within or equal to 4 units away
-#Input: adjacency list, set of positives
-#Output: set of nodes and set of edges containing nodes 4 or fewer paths from a positive node
-def remove_by_dist(adj_list,positives): #K.T, with debugging done by all
-    #print("Running remove_by_dist")##EEK
-    nodes = set() #initialize a set of nodes
-    visited = set() # initialize a set of visited nodes
-    for p in positives: #for every node in the positive set
-        if p in adj_list: # if the positive is in the adjacency list we passed it
-            test_distance, visited = BFS(adj_list, p , visited) # gets the distance from each node in the adjacency list to the considered positive
-        for node in test_distance: # for each node in the distance dictionary from that positive
-            if test_distance[node] <= 4: # if it is less than 4, add it to our new set of nodes
-                nodes.add(node)
-    #print('Number of processed nodes: ',len(nodes))
-    #         edge.append(1) ## doing this to make Steiner work, since it needs weights to run
-    edges = set() # initializes new edge set
-    seen = set() #seen keeps track of redundant nodes
-    for v in adj_list: # for each node in the adjacency list
-        if v in nodes: # if it is in the new set of nodes
-            for u in adj_list[v]: # for each neighbor of that node
-                if u in nodes and u not in seen: # if that neighbor is in the new set of nodes and it hasn't been seen
-                    edges.add(tuple([v,u,1])) # add it to the new edge set
-        seen.add(v) # then add the node we considered, because we have seen it now
-    return nodes, edges
-
-
-#Input: adjacency list
-#Output: edge list (set)
-def adj_to_edge(adj_list): ##labtime, EEK
-    edges = set()
-    for a in adj_list: # for each node
-        for n in adj_list[a]: #goes through all nodes that are neighbors of the top-level node 
-            edge = [a,n] #creates an edge to show they are neighbors
-            if [n,a] not in edges: #checks for duplicates of the edge created
-                edges.add(edge) # adds it to the edge set
-    return edges
 
 # Input: set of nodes, list of edges, and a set of terminals as inputs
 # Output: the metric closure, which is composed of terminals for nodes, and weighted, minimum shortest distances as edges, and adj_list.
@@ -233,9 +178,9 @@ def get_metric_closure(nodes,edges,terminals,distance_dict,pi_dict):
 ## Function uses a dictionary pi (see dijkstra's algorithm) implicitly including starting node 's', and an ending node as the second argument.
 def get_path(pi,node):
     path = [node] ## path starts with the ending node (& works backwords)
-##So long as there is a previous path, pi[path[0]] does not return None.  In that case, the loop ends.
+    ##So long as there is a previous path, pi[path[0]] does not return None.  In that case, the loop ends.
     while pi[path[0]]:
-## + is used to append previous node to the start of the list, so it will become path[0] on next iteration.
+        ## + is used to append previous node to the start of the list, so it will become path[0] on next iteration.
         path = [pi[path[0]]] + path
     return path
 
@@ -337,8 +282,6 @@ def dijkstra(nodes,adj_list,s):
 
     return D,pi 
 
-
-
 #Input: a list of nodes, edges, and terminal nodes L
 #Output: the Steiner Tree of the graph as a set of edges and a list of Steiner Tree nodes
 def SteinerApprox(nodes,edges,terminals,steiner_adj_list,distance_dict,pi_dict): ##MB
@@ -386,19 +329,6 @@ def update_c(node1,node2,C):
 ## and add the union of the two stored cc's into the set of cc sets, C.
     C.add(frozenset(c1).union(frozenset(c2)))
     return
-
-
-
-#Input: path as a list of nodes, adjacency list
-#Output: the path as a list of weighted edges
-def path_to_edges(path, adjacency): ##MB
-    path_edges = []
-    for i in range(len(path)-1):
-        node1 = path[i] #first node in the edge - source
-        node2 = path[i+1] #second node in the edge
-        weight = adjacency[node1][node2] #look up the weight of the path between node1 and node2
-        path_edges.append([node1,node2,weight])
-    return path_edges
 
 #Dijkstra's Ranking
 #Input: list of nodes, list of terminal nodes,
@@ -572,10 +502,6 @@ def steiner_edges_out(tree_edge_set, filename): # Steiner
     #print(all_nodes)
     print('Wrote to',filename)
     return all_nodes
-'''
-This works now!
-'''
-
 
 ##Input all_nodes is set of nodes from egdes_out and input non_pos_nodes is SET of non positive nodes
 #output is two columns, one is the node and the other is whether it is a positive node (N/Y)
@@ -590,9 +516,6 @@ def steiner_nodes_out(all_nodes, non_term_nodes, filename): # Steiner
             out_file.write('Y' + '\n')
     out_file.close()
     print('Wrote to',filename+'.txt')
-'''
-This works too!
-'''
 
 #Input BFS_rank_list is a list of two item lists [[node,float],[node1, float1] ]
 #Output is two columns, one is the node and the other is the BFS rank
@@ -606,9 +529,6 @@ def dijkstra_rank_out(BFS_rank_list, filename): # BFS rank
     out_file.close()
     print('Wrote to',filename+'.txt')
 
-'''
-This works!
-'''
 
 ## Input dict is a dictionary with key = non pos node, value = upstream pos node
 ## output is two columns, with one as non_pos_node and the other as upstream pos node
@@ -620,24 +540,6 @@ def shortest_paths_out(dict, filename): # new shortest paths
         out_file.write(str(dict[key]) + '\n')
     out_file.close()
     print('Wrote to',filename+'.txt')
-
-'''
-This works!
-'''
-
-def steiner_adj_list_file(adj_list, filename):
-    out_file = open(str(filename)+'.txt','w')
-    out_file.write(str(adj_list))
-    out_file.close()
-    print('Wrote to',filename+'.txt')
-
-
-#def compare_outputs:
-    ## Use this function ot read in output text files
-    ## compare the nodes that are present in them
-
-
-
 
 
 if __name__ == '__main__':
