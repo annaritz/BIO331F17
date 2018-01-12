@@ -1,0 +1,15 @@
+Steiner Candidates: ['Alk', 'Bro', 'CG10347', 'CG31140', 'CG7164', 'CG9572', 'CanB2', 'CycG', 'Diap2', 'Khc', 'NetB', 'Nup50', 'Rad51D', 'Rbp9', 'RpL35A', 'Sin3A', 'Spn', 'Ubi-p63E', 'Usp10', 'bmm', 'dally', 'eIF4G2', 'ed', 'kermit', 'nito', 'p53', 'shi', 'wbl'] 28
+
+Dijkstra Candidates:  ['14-3-3epsilon', '14-3-3zeta', 'Act42A', 'Act5C', 'Akt1', 'Appl', 'Hsc70-4', 'Hsp83', 'Nedd4', 'NetB', 'Pi3K21B', 'Pkc53E', 'Rbp9', 'Smox', 'Spn', 'Ubi-p5E', 'Ubi-p63E', 'drk', 'fne', 'mts', 'nonA-l', 'sbr'] 22
+
+Shortest Paths to NM-II Candidates: ['7B2', 'AGO1', 'Acam', 'Act79B', 'Alk', 'BI-1', 'CG10194', 'CG10347', 'CG12289', 'CG14315', 'CG7164', 'CG7409', 'CG8184', 'Cam', 'CanB2', 'CkIIalpha', 'Cyp4e1', 'Cyp4g1', 'Gdi', 'Hsp83', 'Ino80', 'Inx3', 'Khc', 'Mhc', 'Moe', 'NetB', 'Nup358', 'PAPLA1', 'Patj', 'Pi3K21B', 'RPA2', 'Rab35', 'Rab6', 'Rac2', 'Rad51D', 'Shc', 'Sin3A', 'Spn', 'Spps', 'Ten-m', 'Tl', 'Tm1', 'Topors', 'Tsc1', 'Ubi-p63E', 'Vha100-1', 'dome', 'drk', 'eIF4G2', 'esc', 'exd', 'eya', 'kat80', 'mib2', 'mid', 'mts', 'qkr58E-1', 'wbl'] 58
+
+Steiner and Shortest Paths Candidates: ['Alk', 'CG10347', 'CG7164', 'CanB2', 'Khc', 'NetB', 'Rad51D', 'Sin3A', 'Spn', 'Ubi-p63E', 'eIF4G2', 'wbl'] 12
+
+Dijkstra and Shortest Paths :  ['Hsp83', 'NetB', 'Pi3K21B', 'Spn', 'Ubi-p63E', 'drk', 'mts'] 7
+
+Steiner and Dijkstra Candidates:  ['NetB', 'Rbp9', 'Spn', 'Ubi-p63E'] 4
+
+Candidates present in all outputs: ['NetB', 'Spn', 'Ubi-p63E'] 3
+
+Union of all candidates:  ['14-3-3epsilon', '14-3-3zeta', '7B2', 'AGO1', 'Acam', 'Act42A', 'Act5C', 'Act79B', 'Akt1', 'Alk', 'Appl', 'BI-1', 'Bro', 'CG10194', 'CG10347', 'CG12289', 'CG14315', 'CG31140', 'CG7164', 'CG7409', 'CG8184', 'CG9572', 'Cam', 'CanB2', 'CkIIalpha', 'CycG', 'Cyp4e1', 'Cyp4g1', 'Diap2', 'Gdi', 'Hsc70-4', 'Hsp83', 'Ino80', 'Inx3', 'Khc', 'Mhc', 'Moe', 'Nedd4', 'NetB', 'Nup358', 'Nup50', 'PAPLA1', 'Patj', 'Pi3K21B', 'Pkc53E', 'RPA2', 'Rab35', 'Rab6', 'Rac2', 'Rad51D', 'Rbp9', 'RpL35A', 'Shc', 'Sin3A', 'Smox', 'Spn', 'Spps', 'Ten-m', 'Tl', 'Tm1', 'Topors', 'Tsc1', 'Ubi-p5E', 'Ubi-p63E', 'Usp10', 'Vha100-1', 'bmm', 'dally', 'dome', 'drk', 'eIF4G2', 'ed', 'esc', 'exd', 'eya', 'fne', 'kat80', 'kermit', 'mib2', 'mid', 'mts', 'nito', 'nonA-l', 'p53', 'qkr58E-1', 'sbr', 'shi', 'wbl'] 88
