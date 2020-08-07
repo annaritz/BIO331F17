@@ -41,7 +41,7 @@ def main(): # EEK, KT added comments to this
     print('Done reading files and making adjacency list: ' + str(datetime.now()))
 
     #removes nodes more that 4 nodes away from any positive node, reassigns nodes and edges
-    nodes, edges = remove_by_dist(adj_list, positives)
+    #nodes, edges = remove_by_dist(adj_list, positives)
 
     print('Done with Pre-Processing: ' + str(datetime.now()))
 
